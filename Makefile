@@ -1,4 +1,5 @@
 CC = g++
+CFLAGS = -std=c++17
 
 MAIN = $(SRC)/main
 
@@ -9,8 +10,11 @@ OBJ = $(OUT)/o
 
 $(OBJ)/%.o: $(SRC)/%.cpp
 	mkdir -p $(@D)
-	$(CC) -c -o $@ $^
+	$(CC) $(CFLAGS) -c -o $@ $^
 
 build: $(OBJ)/main.o
 	mkdir -p $(@D)
-	$(CC) -o $(OUT)/main $^
+	$(CC) $(CFLAGS) -o $(OUT)/main $^
+
+all: build
+	$(OUT)/main
