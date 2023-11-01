@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client"
 import Button from "./components/Button"
 
 function App(){
-    return <div>
+    return <div className="w-screen h-screen flex items-center justify-center">
         <Button></Button>
     </div>
 }

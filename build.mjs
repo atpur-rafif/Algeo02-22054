@@ -3,7 +3,7 @@ import chokidar from 'chokidar'
 import cpy from "cpy"
 import livereload from "livereload"
 import { parse, relative, resolve } from 'path';
-import { fork } from 'child_process';
+import { exec, fork } from 'child_process';
 
 const watch = process.argv.findIndex(v => v == '-w') != -1;
 
@@ -13,6 +13,10 @@ const livereloadServer = {
         if(server) this.server.refresh(".")
     }
 }
+
+const tailwindCommand = "./node_modules/.bin/tailwindcss -i ./web/page/index.css -o ./dist/page/index.css"
+if(watch) exec(`${tailwindCommand} --watch`) 
+else exec(tailwindCommand)
 
 const server = {
     process: null,
@@ -26,7 +30,6 @@ const server = {
     }
 }
 
-await cpy(["./web/**/*.html", "!./web/**/*.(ts|tsx)"], "./dist")
 
 const contextFrontend = await esbuild.context({
     entryPoints: ["./web/page/index.tsx"],
@@ -64,19 +67,21 @@ const contextBackend = await esbuild.context({
     ]
 })
 
+const ignoreCopy = "ts|tsx|css"
+await cpy(["./web/**/*.html", `!./web/**/*.(${ignoreCopy})`], "./dist")
+
 if(watch){
     await contextFrontend.watch();
     await contextBackend.watch();
-    chokidar.watch("./web/**/*", { ignored: /(.*)\.(ts|tsx)/, }).on("change", async (path) => {
+    
+    chokidar.watch("./web/**/*", { ignored: RegExp(`/(.*)\.(${ignoreCopy})/`), }).on("change", async (path) => {
         const { dir } = parse(path);
         const to = resolve("./dist", relative("./web", dir));
         await cpy([path], to, {
             overwrite: true
         });
-
         livereloadServer.reload();
     })
-
 } else {
     await contextFrontend.rebuild();
     await contextBackend.rebuild();
