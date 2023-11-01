@@ -1,10 +1,9 @@
-import React from "react"
 import { createRoot } from "react-dom/client"
-import Button from "./components/Button"
+import { Button } from "@/components/ui/button"
 
 function App(){
-    return <div>
-        <Button></Button>
+    return <div className="w-screen h-screen flex items-center justify-center">
+        <Button>This is a button</Button>
     </div>
 }
 

@@ -3,7 +3,6 @@ import express from "express"
 import { resolve } from "path"
 import http from "http"
 
-import livereload from "livereload"
 import connectLivereload from "connect-livereload"
 
 const STATIC = "./page"
