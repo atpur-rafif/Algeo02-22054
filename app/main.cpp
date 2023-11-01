@@ -105,8 +105,36 @@ int* Image::getHSVFeature(int binSize){
     return bin;
 }
 
+double getLength(int* v, int length){
+    double distance = 0.0;
+    for(int i = 0; i < length; ++i){
+        double t = (double) v[i];
+        distance += (t * t);
+    }
+    return sqrtl(distance);
+}
+
+double getDotProduct(int* v1, int* v2, int length){
+    double result = 0;
+    for(int i = 0; i < length; ++i){
+        double a = (double) v1[i];
+        double b = (double) v2[i];
+        result += (a * b);
+    }
+    return result;
+}
+
+double getAngle(int* v1, int* v2, int length){
+    return getDotProduct(v1, v2, length) / (getLength(v1, length) * getLength(v2, length));
+}
+
 int main(){
-    int size = 100;
+    int binSize = 100;
+    int binLength = binSize * 3;
+
+    char* targetPath = (char*) "./dataset/_.jpg";
+    Image target(targetPath);
+    int *targetBin = target.getHSVFeature(binSize);
 
     for(int i = 0; i < 1000; ++i){
         char filePath[1000];
@@ -115,12 +143,20 @@ int main(){
         clock_t begin = clock();
 
         Image img(filePath);
-        int* bin = img.getHSVFeature(size);
+        int* bin = img.getHSVFeature(binSize);
+
+        double dotProduct = getDotProduct(bin, targetBin, binLength);
+        double lengthTarget = getLength(targetBin, binLength);
+        double lengthBin = getLength(bin, binLength);
+        double angle = dotProduct / (lengthTarget * lengthBin);
 
         clock_t end = clock();
 
         double spent = (double)(end - begin) / CLOCKS_PER_SEC;
-        printf("%fs\n", spent);
+
+        printf("|A|: %lf |B|: %lf A.B: %lf Angle: %lf %lfs", lengthTarget, lengthBin, dotProduct, angle, spent);
+        if(angle < 0.9f) printf(" %s", filePath);
+        printf("\n");
         fflush(stdout);
     }
 }
