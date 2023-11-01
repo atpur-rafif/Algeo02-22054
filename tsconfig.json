@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "paths": {
+            "@/components/*": ["./web/page/components/*"],
+            "@/lib/utils": ["./web/page/lib/utils.ts"]
+        },
+        "jsx": "react-jsx"
+    }
+}

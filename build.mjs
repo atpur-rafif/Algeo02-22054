@@ -10,13 +10,28 @@ const watch = process.argv.findIndex(v => v == '-w') != -1;
 const livereloadServer = {
     server: watch ? livereload.createServer() : null,
     reload(){
-        if(server) this.server.refresh(".")
+        console.log("\x1b[32mReload browser...\x1b[0m")
+        this.server.refresh(".")
     }
 }
 
-const tailwindCommand = "./node_modules/.bin/tailwindcss -i ./web/page/index.css -o ./dist/page/index.css"
-if(watch) exec(`${tailwindCommand} --watch`) 
-else exec(tailwindCommand)
+const tailwindCommand = "./node_modules/.bin/tailwindcss -i ./web/page/index.css -o ./dist/page/index.css --silent"
+const tailwindProcess = exec(`${tailwindCommand} ${watch ? "--watch" : ""}`)
+tailwindProcess.stderr.on("data", (e) => {
+    e = e.replace("\n", "").trim()
+    if(!e) return;
+
+    if(e == "Rebuilding..."){
+        if(watch) console.log("\x1b[32mRebuilding tailwind...\x1b[0m")
+        return;
+    }
+
+    if(e.includes("Done in")){
+        if(watch) livereloadServer.reload()
+    } else {
+        console.error(e)
+    }
+})
 
 const server = {
     process: null,
@@ -40,7 +55,7 @@ const contextFrontend = await esbuild.context({
             name: "Frontend-reload",
             setup(build){
                 build.onEnd(() => {
-                    livereloadServer.reload()
+                    if(watch) livereloadServer.reload()
                 })
             }
         }
@@ -60,7 +75,7 @@ const contextBackend = await esbuild.context({
             name: "Backend-reload",
             setup(build){
                 build.onEnd(() => {
-                    server.respawn()
+                    if(watch) server.respawn()
                 })
             }
         }
@@ -68,13 +83,13 @@ const contextBackend = await esbuild.context({
 })
 
 const ignoreCopy = "ts|tsx|css"
-await cpy(["./web/**/*.html", `!./web/**/*.(${ignoreCopy})`], "./dist")
+await cpy(["./web/**/*", `!./web/**/*.(${ignoreCopy})`], "./dist")
 
 if(watch){
     await contextFrontend.watch();
     await contextBackend.watch();
     
-    chokidar.watch("./web/**/*", { ignored: RegExp(`/(.*)\.(${ignoreCopy})/`), }).on("change", async (path) => {
+    chokidar.watch("./web/**/*", { ignored: new RegExp(`(.*)\.(${ignoreCopy})`), }).on("change", async (path) => {
         const { dir } = parse(path);
         const to = resolve("./dist", relative("./web", dir));
         await cpy([path], to, {
