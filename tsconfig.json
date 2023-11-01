@@ -4,6 +4,7 @@
             "@/components/*": ["./web/page/components/*"],
             "@/lib/utils": ["./web/page/lib/utils.ts"]
         },
-        "jsx": "react-jsx"
+        "jsx": "react-jsx",
+        "esModuleInterop": true
     }
 }
