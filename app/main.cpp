@@ -129,7 +129,7 @@ double getAngle(int* v1, int* v2, int length){
 }
 
 int main(){
-    int binSize = 100;
+    int binSize = 3;
     int binLength = binSize * 3;
 
     char* targetPath = (char*) "./dataset/_.jpg";
@@ -155,7 +155,7 @@ int main(){
         double spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
         printf("|A|: %lf |B|: %lf A.B: %lf Angle: %lf %lfs", lengthTarget, lengthBin, dotProduct, angle, spent);
-        if(angle < 0.9f) printf(" %s", filePath);
+        if(angle > 0.98f) printf(" %s", filePath);
         printf("\n");
         fflush(stdout);
     }
