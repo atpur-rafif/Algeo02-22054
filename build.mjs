@@ -48,6 +48,10 @@ const contextBackend = await esbuild.context({
     entryPoints: ["./web/main.ts"],
     format: "cjs",
     outdir: "./dist",
+    platform: "node",
+    packages: "external",
+    platform: "node",
+    bundle: true,
     plugins: [
         {
             name: "Backend-reload",
