@@ -12,6 +12,12 @@ struct RGB{
     unsigned char blue;
 };
 
+struct HSV{
+    double h;
+    double s;
+    double v;
+};
+
 class Image{
     private:
         int height;
@@ -19,9 +25,11 @@ class Image{
         int channel;
         unsigned char* img;
     public:
-        Image(string);
+        Image(string filePath);
         ~Image();
         RGB getPixel(int x, int y);
+        int* getHSVFeature(int binSize);
+        static HSV RGBtoHSV(RGB value);
 };
 
 Image::Image(string filePath){
@@ -33,13 +41,76 @@ Image::~Image(){
 }
 
 RGB Image::getPixel(int x, int y){
+    if(x < 0) x = 0;
+    if(y < 0) y = 0;
+    if(x > width) x = width - 1;
+    if(y > height) y = height - 1;
+
     int pos = y * width + x;
     return {img[pos], img[pos + 1], img[pos + 2]};
+}
+
+HSV Image::RGBtoHSV(RGB value){
+    double r = value.red / 255.0f;
+    double g = value.green / 255.0f;
+    double b = value.blue / 255.0f;
+
+    double cmax = max(max(r, g), b);
+    double cmin = min(min(r, g), b);
+    double delta = cmax - cmin;
+
+    double h;
+    if(delta == 0) h = 0;
+    else if(cmax == r) h = fmod(60 * ((g - b) / delta) + 360, 360);
+    else if(cmax == g) h = fmod(60 * ((b - r) / delta) + 120, 360);
+    else if(cmax == b) h = fmod(60 * ((r - g) / delta) + 240, 360);
+
+    double s;
+    if(cmax == 0) s = 0;
+    else if(cmax != 0) s = delta / cmax;
+
+    double v = cmax;
+
+    return { h, s, v };
+}
+
+int* Image::getHSVFeature(int binSize){
+    int binLength = binSize * 3;
+    int *bin = (int*) malloc(sizeof(int) * binLength);
+
+    if(bin == NULL) return bin;
+
+    for(int i = 0; i < binLength; ++i) bin[i] = 0;
+
+    for(int i = 0; i < height; ++i){
+        for(int j = 0; j < width; ++j){
+            bin[0] += 1;
+            RGB rgb = getPixel(j, i);
+            HSV hsv = Image::RGBtoHSV(rgb);
+
+            hsv.h = hsv.h / 360.0; /* Normalize h from [0..360] to [0..1]*/
+
+            int ih = (int) (hsv.h * binSize);
+            int is = (int) (hsv.s * binSize);
+            int iv = (int) (hsv.v * binSize);
+
+
+            bin[ih] += 1;
+            bin[is + binSize] += 1;
+            bin[iv + binSize * 2] += 1;
+        }
+    }
+
+    return bin;
 }
 
 int main(){
     Image img("./img/Lena.bmp");
 
-    RGB p = img.getPixel(0, 0);
-    printf("%d %d %d", p.red, p.green, p.blue);
+    int size = 100;
+    int* bin = img.getHSVFeature(size);
+
+    for(int i = 0; i < size * 3; ++i){
+        printf("%d ", bin[i]);
+    }
 }
