@@ -2,3 +2,5 @@ bin
 node_modules
 tmp
 dist
+dataset
+.vscode
