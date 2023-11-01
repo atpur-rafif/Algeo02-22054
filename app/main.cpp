@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string>
+#include <time.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/std_image.h"
@@ -25,15 +26,15 @@ class Image{
         int channel;
         unsigned char* img;
     public:
-        Image(string filePath);
+        Image(char* filePath);
         ~Image();
         RGB getPixel(int x, int y);
         int* getHSVFeature(int binSize);
         static HSV RGBtoHSV(RGB value);
 };
 
-Image::Image(string filePath){
-    img = stbi_load(filePath.c_str(), &width, &height, &channel, 3);
+Image::Image(char* filePath){
+    img = stbi_load(filePath, &width, &height, &channel, 3);
 }
 
 Image::~Image(){
@@ -105,12 +106,21 @@ int* Image::getHSVFeature(int binSize){
 }
 
 int main(){
-    Image img("./img/Lena.bmp");
-
     int size = 100;
-    int* bin = img.getHSVFeature(size);
 
-    for(int i = 0; i < size * 3; ++i){
-        printf("%d ", bin[i]);
+    for(int i = 0; i < 1000; ++i){
+        char filePath[1000];
+        snprintf(filePath, 1000, "./dataset/%d.jpg", i);
+
+        clock_t begin = clock();
+
+        Image img(filePath);
+        int* bin = img.getHSVFeature(size);
+
+        clock_t end = clock();
+
+        double spent = (double)(end - begin) / CLOCKS_PER_SEC;
+        printf("%fs\n", spent);
+        fflush(stdout);
     }
 }
