@@ -15,23 +15,25 @@ const livereloadServer = {
     }
 }
 
-const tailwindCommand = "./node_modules/.bin/tailwindcss -i ./web/page/index.css -o ./dist/page/index.css --silent"
-const tailwindProcess = exec(`${tailwindCommand} ${watch ? "--watch" : ""}`)
-tailwindProcess.stderr.on("data", (e) => {
-    e = e.replace("\n", "").trim()
-    if(!e) return;
+function tailwindBuild(){
+    const command = "./node_modules/.bin/tailwindcss -i ./web/page/index.css -o ./dist/page/index.css"
+    const process = exec(command)
 
-    if(e == "Rebuilding..."){
-        if(watch) console.log("\x1b[32mRebuilding tailwind...\x1b[0m")
-        return;
-    }
+    process.stderr.on("data", (e) => {
+        e = e.replace("\n", "").trim()
+        if (!e) return;
 
-    if(e.includes("Done in")){
-        if(watch) livereloadServer.reload()
-    } else {
-        console.error(e)
-    }
-})
+        if (!e.includes("Done in") && e != "Rebuilding...") {
+            console.error(e)
+        }
+    })
+
+    return new Promise((resolve) => {
+        process.on("close", () => {
+            resolve()
+        })
+    })
+}
 
 const server = {
     process: null,
@@ -39,9 +41,9 @@ const server = {
         if(this.process != null) this.process.kill();
 
         this.process = fork("./dist/main.js")
+        console.log("\x1b[32mRebuilding server...\x1b[0m")
         this.process.on("message", (m) => console.log(m))
         this.process.on("spawn", () => livereloadServer.reload())
-        console.log("\x1b[32mServer reloaded..\x1b[0m")
     }
 }
 
@@ -54,8 +56,15 @@ const contextFrontend = await esbuild.context({
         {
             name: "Frontend-reload",
             setup(build){
-                build.onEnd(() => {
-                    if(watch) livereloadServer.reload()
+                build.onStart(() => {
+                    if (watch) console.log("\x1b[32mRebuilding page...\x1b[0m")
+                })
+
+                build.onEnd(async () => {
+                    if(watch){
+                        await tailwindBuild()
+                        livereloadServer.reload()
+                    }
                 })
             }
         }
@@ -84,6 +93,7 @@ const contextBackend = await esbuild.context({
 
 const ignoreCopy = "ts|tsx|css"
 await cpy(["./web/**/*", `!./web/**/*.(${ignoreCopy})`], "./dist")
+await tailwindBuild()
 
 if(watch){
     await contextFrontend.watch();
