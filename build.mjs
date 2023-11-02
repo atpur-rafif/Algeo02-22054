@@ -41,7 +41,7 @@ const server = {
         if(this.process != null) this.process.kill();
 
         this.process = fork("./dist/main.js")
-        console.log("\x1b[32mRebuilding server..\x1b[0m")
+        console.log("\x1b[32mRebuilding server...\x1b[0m")
         this.process.on("message", (m) => console.log(m))
         this.process.on("spawn", () => livereloadServer.reload())
     }
