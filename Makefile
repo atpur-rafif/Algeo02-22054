@@ -1,5 +1,4 @@
-CC = g++
-CFLAGS = -std=c++17
+CC = gcc
 
 MAIN = $(SRC)/main
 
@@ -8,7 +7,7 @@ OUT = dist/bin
 OBJ = $(OUT)/o
 
 
-$(OBJ)/%.o: $(SRC)/%.cpp
+$(OBJ)/%.o: $(SRC)/%.c
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $^
 
