@@ -1,5 +1,5 @@
-#ifndef _VECTOR_H_
-#define _VECTOR_H_
+#ifndef _VECTOR_
+#define _VECTOR_
 
 typedef struct vector{
     double* component;

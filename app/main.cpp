@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "lib/image.h"
-#include "lib/vector.h"
+#include "lib/image.hpp"
+#include "lib/vector.hpp"
 
 int main(){
     Image img;

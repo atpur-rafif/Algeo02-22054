@@ -1,5 +1,5 @@
-#ifndef _IMAGE_H_
-#define _IMAGE_H_
+#ifndef _IMAGE_
+#define _IMAGE_
 
 typedef struct {
     unsigned char red;

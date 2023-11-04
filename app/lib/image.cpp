@@ -1,9 +1,9 @@
-#include "image.h"
+#include "image.hpp"
 
 #define MAX_PATH 200
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
+#include "stb/stb_image.hpp"
 
 void getImage(Image* img, char* path){
     img->pixel = stbi_load(path, &(img->width), &(img->height), &(img->channel), 3);

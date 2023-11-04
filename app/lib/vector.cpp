@@ -1,9 +1,9 @@
-#include "vector.h"
+#include "vector.hpp"
 #include <stdlib.h>
 #include <math.h>
 
 VectorPointer createVector(VectorPointer vector, int dimension){
-    vector->component = malloc(dimension * sizeof(double));
+    vector->component = (double*) (dimension * sizeof(double));
     if(vector->component == NULL) return NULL;
 
     vector->dimension = dimension;
