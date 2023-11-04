@@ -1,11 +1,29 @@
 #include <stdio.h>
+#include <string>
+#include <iostream>
+#include <format>
 #include "lib/image.hpp"
 #include "lib/vector.hpp"
+#include "lib/cbir_color.hpp"
+
+using namespace std;
 
 int main(){
-    Image img;
-    getImage(&img, "./img/Lena.bmp");
+    Image* target = new Image("./dataset/0.jpg");
 
-    RGB r = getRGB(img, 0, 0);
-    printf("%d %d %d", r.red, r.green, r.blue);
+    for(int i = 0; i < 1000; ++i){
+
+        clock_t begin = clock();
+
+        string path = "./dataset/" + to_string(i) + ".jpg";
+        Image* test = new Image(path);
+        double angle = getColorAngle(target, test, 10);
+
+        clock_t end = clock();
+
+        double spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+        printf("Spent: %lf | Angle: %lf\n", spent, angle);
+        fflush(stdout);
+    }
 }

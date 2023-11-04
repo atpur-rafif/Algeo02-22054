@@ -1,16 +1,17 @@
 #ifndef _VECTOR_
 #define _VECTOR_
 
-typedef struct vector{
-    double* component;
-    int dimension;
-} Vector;
-
-typedef struct vector* VectorPointer;
-
-VectorPointer createVector(VectorPointer vector, int dimension);
-double getInnerProduct(Vector vectorA, Vector vectorB);
-double getVectorNorm(Vector vector);
-double getVectorAngle(Vector vectorA, Vector vectorB);
+class Vector{
+    public:
+        int dimension;
+        double* component;
+        void display();
+        static double norm(Vector* vector);
+        static double innerProduct(Vector* a, Vector* b);
+        static double angle(Vector* a, Vector* b);
+        Vector(int dimension);
+        Vector(int dimension, double* components);
+        ~Vector();
+};
 
 #endif

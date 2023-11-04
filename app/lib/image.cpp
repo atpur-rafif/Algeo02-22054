@@ -5,26 +5,31 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.hpp"
 
-void getImage(Image* img, char* path){
-    img->pixel = stbi_load(path, &(img->width), &(img->height), &(img->channel), 3);
+Image::Image(string path){
+    this->pixel = stbi_load(path.c_str(), &(this->width), &(this->height), &(this->channel), 3);
 }
 
-void clearImage(Image* img){
-    free(img);
-    stbi_image_free(img->pixel);
+Image::~Image(){
+    printf("Image Destructed\n");
+    fflush(stdout);
+    stbi_image_free(this->pixel);
 }
 
-RGB getRGB(Image img, int x, int y){
+RGB Image::getRGB(int x, int y){
     if(x < 0) x = 0;
     if(y < 0) y = 0;
-    if(x > img.width) x = img.width - 1;
-    if(y > img.height) y = img.height - 1;
+    if(x > this->width) x = this->width - 1;
+    if(y > this->height) y = this->height - 1;
 
-    int pos = y * img.width + x;
-    return (RGB){img.pixel[pos], img.pixel[pos + 1], img.pixel[pos + 2]};
+    int pos = y * this->height + x;
+    return (RGB){this->pixel[pos], this->pixel[pos + 1], this->pixel[pos + 2]};
 }
 
-HSV RGBtoHSV(RGB value){
+HSV Image::getHSV(int x, int y){
+    return Image::RGBtoHSV(Image::getRGB(x, y));
+}
+
+HSV Image::RGBtoHSV(RGB value){
     double r = ((double) value.red) / 255.0f;
     double g = ((double) value.green) / 255.0f;
     double b = ((double) value.blue) / 255.0f;
