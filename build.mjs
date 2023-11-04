@@ -16,7 +16,7 @@ const livereloadServer = {
 }
 
 function tailwindBuild(){
-    const command = "./node_modules/.bin/tailwindcss -i ./web/page/index.css -o ./dist/page/index.css"
+    const command = "npx tailwindcss -i ./web/page/index.css -o ./dist/page/index.css"
     const process = exec(command)
 
     process.stderr.on("data", (e) => {
