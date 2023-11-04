@@ -1,19 +1,30 @@
 CC = gcc
 
-MAIN = $(SRC)/main
+OUT = main
+OUT_PATH = $(OUT_DIR)/$(OUT)
 
-SRC = app
-OUT = dist/bin
-OBJ = $(OUT)/o
+SRC_DIR = app
+OUT_DIR = dist/bin
+OBJ_DIR = $(OUT_DIR)/o
 
+DEPS = main.c lib/image.c lib/vector.c lib/error.c 
 
-$(OBJ)/%.o: $(SRC)/%.c
+PREPEND_ALL = $(foreach f,$2,$1$f)
+DEPS_SRC = $(call PREPEND_ALL,$(SRC_DIR)/,$(DEPS))
+DEPS_OBJ = $(patsubst %.c,%.o,$(call PREPEND_ALL,$(OBJ_DIR)/,$(DEPS)))
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $^
 
-build: $(OBJ)/main.o
-	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -o $(OUT)/main $^
+$(OUT_PATH) : $(DEPS_OBJ)
+	$(CC) $(CFLAGS) -o $(OUT_DIR)/$(OUT) $^
 
-all: build
-	$(OUT)/main
+
+build: $(OUT_PATH)
+
+clean:
+	rm -rf $(OUT_DIR)
+
+all: $(OUT_PATH)
+	$(OUT_DIR)/main
