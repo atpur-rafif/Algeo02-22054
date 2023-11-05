@@ -1,4 +1,5 @@
 #include "image.hpp"
+#include "limits.h"
 
 #define MAX_PATH 200
 
@@ -10,9 +11,16 @@ Image::Image(string path){
 }
 
 Image::~Image(){
-    printf("Image Destructed\n");
-    fflush(stdout);
     stbi_image_free(this->pixel);
+}
+
+int Image::getGrayscale(int x, int y){
+    RGB p = this->getRGB(x, y);
+    int result = (0.29 * ((double) p.red)) + (0.587 * ((double) p.green)) + (0.114 * ((double) p.blue));
+    if(result < 0) result = 0;
+    if(result > 255) result = 255;
+
+    return result;
 }
 
 RGB Image::getRGB(int x, int y){

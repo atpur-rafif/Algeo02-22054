@@ -24,7 +24,7 @@ Vector::~Vector(){
 void Vector::display(){
     printf("[");
     for(int i = 0; i < this->dimension; ++i){
-        printf("%.2lf", this->component[i]);
+        printf("%lf", this->component[i]);
         if(i != this->dimension - 1) printf(",");
     }
     printf("]");
@@ -54,6 +54,10 @@ double Vector::norm(Vector *vector){
 double Vector::angle(Vector *vectorA, Vector *vectorB){
     if(vectorA->dimension != vectorB->dimension) return NAN;
     double c = Vector::innerProduct(vectorA, vectorB) / (Vector::norm(vectorA) * Vector::norm(vectorB));
+
+    if(c > 1.0) c = 1.0;
+    if(c < 0.0) c = 0.0;
+
     return acos(c);
 }
 

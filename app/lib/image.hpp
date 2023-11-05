@@ -24,6 +24,7 @@ class Image{
         int channel;
         RGB getRGB(int x, int y);
         HSV getHSV(int x, int y);
+        int getGrayscale(int x, int y);
         static HSV RGBtoHSV(RGB value);
 
         Image(string path);
