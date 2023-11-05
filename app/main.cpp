@@ -6,8 +6,10 @@
 #include "lib/vector.hpp"
 #include "lib/cbir_color.hpp"
 #include "lib/cbir_texture.hpp"
+#include "lib/nlohmann/json.hpp"
 
 using namespace std;
+using json = nlohmann::json;
 
 int main(){
     Image* target = new Image("./dataset/0.jpg");
