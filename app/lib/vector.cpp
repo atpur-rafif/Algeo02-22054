@@ -1,4 +1,5 @@
 #include "vector.hpp"
+#include "utils.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -54,10 +55,7 @@ double Vector::norm(Vector *vector){
 double Vector::angle(Vector *vectorA, Vector *vectorB){
     if(vectorA->dimension != vectorB->dimension) return NAN;
     double c = Vector::innerProduct(vectorA, vectorB) / (Vector::norm(vectorA) * Vector::norm(vectorB));
-
-    if(c > 1.0) c = 1.0;
-    if(c < 0.0) c = 0.0;
-
+    clampNumber(c, 0.0, 1.0);
     return acos(c);
 }
 
