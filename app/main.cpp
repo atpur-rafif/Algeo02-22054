@@ -13,7 +13,6 @@ using json = nlohmann::json;
 
 int main(){
     Image* target = new Image("./dataset/0.jpg");
-    Vector* targetTexture = getGLCMVectorFeature(target, 1, 1);
 
     for(int i = 0; i < 1000; ++i){
 
@@ -21,9 +20,8 @@ int main(){
 
         string path = "./dataset/" + to_string(i) + ".jpg";
         Image* test = new Image(path);
-        Vector* testTexture = getGLCMVectorFeature(test, 1, 1);
 
-        double angle = Vector::angle(targetTexture, testTexture);
+        double angle = getColorAngle(test, target, 10);
 
         clock_t end = clock();
 

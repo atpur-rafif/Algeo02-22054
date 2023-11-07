@@ -1,3 +1,4 @@
+#include <limits.h>
 #include "cbir_texture.hpp"
 
 // Mapping between Matrix component to Vector Component
@@ -81,8 +82,8 @@ double getEntropy(Vector *GLCM){
     for(int i = 0; i < QUANTIZATION_LEVEL; ++i){
         for(int j = 0; j < QUANTIZATION_LEVEL; ++j){
             double val = GLCM->component[flatten(i, j, QUANTIZATION_LEVEL)];
-            res += val * log(val);
+            if(val != 0) res += val * log(val);
         }
     }
-    return -res;
+    return (-1) * res;
 }
