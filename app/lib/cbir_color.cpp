@@ -2,24 +2,20 @@
 #include "image.hpp"
 #include "vector.hpp"
 
-Vector *getHSVFeatureVector(Image *img, int binSize){
-    Vector* v = new Vector(binSize * 3);
+Vector *getHSVFeatureVector(Image *img, Histogram *hHist, Histogram *sHist, Histogram *vHist){
+    Vector* v = new Vector(hHist->size + sHist->size + vHist->size);
 
     for(int i = 0; i < img->height; ++i){
         for(int j = 0; j < img->width; ++j){
             HSV hsv = img->getHSV(j, i);
             
-            int ih = (int) ((hsv.h / 360.0) * binSize); // Normalize h from [0..360] to [0..1]
-            int is = (int) (hsv.s * binSize);
-            int iv = (int) (hsv.v * binSize);
-
-            if(ih >= binSize) ih = binSize - 1;
-            if(is >= binSize) is = binSize - 1;
-            if(iv >= binSize) iv = binSize - 1;
+            int ih = hHist->getBin(hsv.h);
+            int is = sHist->getBin(hsv.s);
+            int iv = vHist->getBin(hsv.v);
 
             v->component[ih] += 1;
-            v->component[is + binSize] += 1;
-            v->component[iv + (binSize * 2)] += 1;
+            v->component[hHist->size + is] += 1;
+            v->component[hHist->size + sHist->size + iv] += 1;
         }
     }
 
@@ -27,8 +23,15 @@ Vector *getHSVFeatureVector(Image *img, int binSize){
 }
 
 double getColorAngle(Image *img1, Image *img2, int binSize){
-    Vector* a = getHSVFeatureVector(img1, binSize);
-    Vector* b = getHSVFeatureVector(img2, binSize);
+    auto hist = Histogram::createUniformHistogram(0.0, 1.0, binSize);
+    double result = getColorAngle(img1, img2, hist, hist, hist);
+    delete hist;
+    return result;
+}
+
+double getColorAngle(Image *img1, Image *img2, Histogram *hHist, Histogram *sHist, Histogram *vHist){
+    Vector* a = getHSVFeatureVector(img1, hHist, sHist, vHist);
+    Vector* b = getHSVFeatureVector(img2, hHist, sHist, vHist);
     double result = Vector::angle(a, b);
     delete a; delete b;
     return result;

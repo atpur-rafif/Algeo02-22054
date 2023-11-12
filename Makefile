@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++20 -O2
+CFLAGS = -std=c++11 -O2
 
 OUT = main
 OUT_PATH = $(OUT_DIR)/$(OUT)
@@ -8,7 +8,7 @@ SRC_DIR = app
 OUT_DIR = dist/bin
 OBJ_DIR = $(OUT_DIR)/o
 
-DEPS = main.cpp lib/image.cpp lib/vector.cpp lib/cbir_color.cpp lib/cbir_texture.cpp lib/utils.cpp
+DEPS = main.cpp lib/image.cpp lib/vector.cpp lib/cbir_color.cpp lib/cbir_texture.cpp lib/utils.cpp lib/histogram.cpp
 
 PREPEND_ALL = $(foreach f,$2,$1$f)
 DEPS_SRC = $(call PREPEND_ALL,$(SRC_DIR)/,$(DEPS))

@@ -1,35 +1,69 @@
 #include <stdio.h>
 #include <string>
 #include <iostream>
-#include <format>
+#include <chrono>
+#include <fstream>
+#include <filesystem>
+#include <set>
+#include <vector>
 #include "lib/image.hpp"
 #include "lib/vector.hpp"
+#include "lib/histogram.hpp"
 #include "lib/cbir_color.hpp"
 #include "lib/cbir_texture.hpp"
 #include "lib/nlohmann/json.hpp"
 
 using namespace std;
+using namespace std::__fs;
 using json = nlohmann::json;
+using namespace std::chrono;
+set<string> exts = {".png", ".jpg", ".bmp"};
 
 int main(){
-    Image* target = new Image("./dataset/0.jpg");
+    ifstream config("./dist/target/texture.json");
+    json data = json::parse(config);
 
-    for(int i = 0; i < 1000; ++i){
+    string dataset = data.at("dataset");
+    string target = data.at("target");
 
-        clock_t begin = clock();
+    string type = data.at("type");
 
-        string path = "./dataset/" + to_string(i) + ".jpg";
-        Image* test = new Image(path);
+    auto targetImage = new Image(target);
+    vector<string> datasetPaths;
+    for(const auto &entry : filesystem::directory_iterator(dataset)){
+        auto path = entry.path();
+        auto ext = path.extension();
+        if(exts.count(ext) == 0) continue;
+        datasetPaths.push_back(path);
+    }
 
-        double angle = getColorAngle(test, target, 10);
+    if(type == string("color")){
+        auto bin = data.at("bin");
+        vector<double> hBin = bin.at("h");
+        vector<double> sBin = bin.at("s");
+        vector<double> vBin = bin.at("v");
 
-        clock_t end = clock();
+        auto hHist = new Histogram(hBin);
+        auto sHist = new Histogram(sBin);
+        auto vHist = new Histogram(vBin);
 
-        double spent = (double)(end - begin) / CLOCKS_PER_SEC;
+        for(const auto testPath : datasetPaths){
+            auto testImage = new Image(testPath);
+            printf("%s %lf\n", testPath.c_str(), getColorAngle(targetImage, testImage, 5));
+            delete testImage;
+        }
+    } else if(type == string("texture")){
+        int blockSize = data.at("blockSize");
+        int dimension = blockSize * blockSize;
 
-        delete test;
+        auto contrastTarget = new Vector(dimension);
+        auto homogenityTarget = new Vector(dimension);
+        auto entropyTarget = new Vector(dimension);
 
-        printf("Spent: %lf | Angle: %lf\n", spent, angle);
-        fflush(stdout);
+        for(const auto testPath : datasetPaths){
+            auto testImage = new Image(testPath);
+            printf("%s", testPath.c_str());
+            break;
+        }
     }
 }

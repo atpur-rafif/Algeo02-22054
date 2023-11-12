@@ -56,6 +56,6 @@ double Vector::angle(Vector *vectorA, Vector *vectorB){
     if(vectorA->dimension != vectorB->dimension) return NAN;
     double c = Vector::innerProduct(vectorA, vectorB) / (Vector::norm(vectorA) * Vector::norm(vectorB));
     clampNumber(c, 0.0, 1.0);
-    return acos(c);
+    return c;
 }
 
