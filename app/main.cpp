@@ -1,162 +1,69 @@
 #include <stdio.h>
 #include <string>
-#include <time.h>
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb/std_image.h"
+#include <iostream>
+#include <chrono>
+#include <fstream>
+#include <filesystem>
+#include <set>
+#include <vector>
+#include "lib/image.hpp"
+#include "lib/vector.hpp"
+#include "lib/histogram.hpp"
+#include "lib/cbir_color.hpp"
+#include "lib/cbir_texture.hpp"
+#include "lib/nlohmann/json.hpp"
 
 using namespace std;
-
-struct RGB{
-    unsigned char red;
-    unsigned char green;
-    unsigned char blue;
-};
-
-struct HSV{
-    double h;
-    double s;
-    double v;
-};
-
-class Image{
-    private:
-        int height;
-        int width;
-        int channel;
-        unsigned char* img;
-    public:
-        Image(char* filePath);
-        ~Image();
-        RGB getPixel(int x, int y);
-        int* getHSVFeature(int binSize);
-        static HSV RGBtoHSV(RGB value);
-};
-
-Image::Image(char* filePath){
-    img = stbi_load(filePath, &width, &height, &channel, 3);
-}
-
-Image::~Image(){
-    stbi_image_free(img);
-}
-
-RGB Image::getPixel(int x, int y){
-    if(x < 0) x = 0;
-    if(y < 0) y = 0;
-    if(x > width) x = width - 1;
-    if(y > height) y = height - 1;
-
-    int pos = y * width + x;
-    return {img[pos], img[pos + 1], img[pos + 2]};
-}
-
-HSV Image::RGBtoHSV(RGB value){
-    double r = value.red / 255.0f;
-    double g = value.green / 255.0f;
-    double b = value.blue / 255.0f;
-
-    double cmax = max(max(r, g), b);
-    double cmin = min(min(r, g), b);
-    double delta = cmax - cmin;
-
-    double h;
-    if(delta == 0) h = 0;
-    else if(cmax == r) h = fmod(60 * ((g - b) / delta) + 360, 360);
-    else if(cmax == g) h = fmod(60 * ((b - r) / delta) + 120, 360);
-    else if(cmax == b) h = fmod(60 * ((r - g) / delta) + 240, 360);
-
-    double s;
-    if(cmax == 0) s = 0;
-    else if(cmax != 0) s = delta / cmax;
-
-    double v = cmax;
-
-    return { h, s, v };
-}
-
-int* Image::getHSVFeature(int binSize){
-    int binLength = binSize * 3;
-    int *bin = (int*) malloc(sizeof(int) * binLength);
-
-    if(bin == NULL) return bin;
-
-    for(int i = 0; i < binLength; ++i) bin[i] = 0;
-
-    for(int i = 0; i < height; ++i){
-        for(int j = 0; j < width; ++j){
-            bin[0] += 1;
-            RGB rgb = getPixel(j, i);
-            HSV hsv = Image::RGBtoHSV(rgb);
-
-            hsv.h = hsv.h / 360.0; /* Normalize h from [0..360] to [0..1]*/
-
-            int ih = (int) (hsv.h * binSize);
-            int is = (int) (hsv.s * binSize);
-            int iv = (int) (hsv.v * binSize);
-
-
-            bin[ih] += 1;
-            bin[is + binSize] += 1;
-            bin[iv + binSize * 2] += 1;
-        }
-    }
-
-    return bin;
-}
-
-double getLength(int* v, int length){
-    double distance = 0.0;
-    for(int i = 0; i < length; ++i){
-        double t = (double) v[i];
-        distance += (t * t);
-    }
-    return sqrtl(distance);
-}
-
-double getDotProduct(int* v1, int* v2, int length){
-    double result = 0;
-    for(int i = 0; i < length; ++i){
-        double a = (double) v1[i];
-        double b = (double) v2[i];
-        result += (a * b);
-    }
-    return result;
-}
-
-double getAngle(int* v1, int* v2, int length){
-    return getDotProduct(v1, v2, length) / (getLength(v1, length) * getLength(v2, length));
-}
+using namespace std::__fs;
+using json = nlohmann::json;
+using namespace std::chrono;
+set<string> exts = {".png", ".jpg", ".bmp"};
 
 int main(){
-    int binSize = 3;
-    int binLength = binSize * 3;
+    ifstream config("./dist/target/texture.json");
+    json data = json::parse(config);
 
-    char* targetPath = (char*) "./dataset/_.jpg";
-    Image target(targetPath);
-    int *targetBin = target.getHSVFeature(binSize);
+    string dataset = data.at("dataset");
+    string target = data.at("target");
 
-    for(int i = 0; i < 1000; ++i){
-        char filePath[1000];
-        snprintf(filePath, 1000, "./dataset/%d.jpg", i);
+    string type = data.at("type");
 
-        clock_t begin = clock();
+    auto targetImage = new Image(target);
+    vector<string> datasetPaths;
+    for(const auto &entry : filesystem::directory_iterator(dataset)){
+        auto path = entry.path();
+        auto ext = path.extension();
+        if(exts.count(ext) == 0) continue;
+        datasetPaths.push_back(path);
+    }
 
-        Image img(filePath);
-        int* bin = img.getHSVFeature(binSize);
+    if(type == string("color")){
+        auto bin = data.at("bin");
+        vector<double> hBin = bin.at("h");
+        vector<double> sBin = bin.at("s");
+        vector<double> vBin = bin.at("v");
 
-        double dotProduct = getDotProduct(bin, targetBin, binLength);
-        double lengthTarget = getLength(targetBin, binLength);
-        double lengthBin = getLength(bin, binLength);
-        double angle = dotProduct / (lengthTarget * lengthBin);
+        auto hHist = new Histogram(hBin);
+        auto sHist = new Histogram(sBin);
+        auto vHist = new Histogram(vBin);
 
-        clock_t end = clock();
+        for(const auto testPath : datasetPaths){
+            auto testImage = new Image(testPath);
+            printf("%s %lf\n", testPath.c_str(), getColorAngle(targetImage, testImage, 5));
+            delete testImage;
+        }
+    } else if(type == string("texture")){
+        int blockSize = data.at("blockSize");
+        int dimension = blockSize * blockSize;
 
-        double spent = (double)(end - begin) / CLOCKS_PER_SEC;
+        auto contrastTarget = new Vector(dimension);
+        auto homogenityTarget = new Vector(dimension);
+        auto entropyTarget = new Vector(dimension);
 
-        printf("|A|: %lf |B|: %lf A.B: %lf Angle: %lf %lfs", lengthTarget, lengthBin, dotProduct, angle, spent);
-        if(angle > 0.98f) printf(" %s", filePath);
-        printf("\n");
-        fflush(stdout);
+        for(const auto testPath : datasetPaths){
+            auto testImage = new Image(testPath);
+            printf("%s", testPath.c_str());
+            break;
+        }
     }
 }

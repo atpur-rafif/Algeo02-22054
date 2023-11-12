@@ -1,15 +1,6 @@
 {
   "type": "commonjs",
-  "dependencies": {
-    "@radix-ui/react-slot": "^1.0.2",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.0.0",
-    "express": "^4.18.2",
-    "lucide-react": "^0.291.0",
-    "react-dom": "^18.2.0",
-    "tailwind-merge": "^2.0.0",
-    "tailwindcss-animate": "^1.0.7"
-  },
+  "dependencies": {},
   "scripts": {
     "build-app": "make build",
     "build-web": "node ./build.mjs",
@@ -20,9 +11,18 @@
     "all": "npm run build; node ./dist/main.js"
   },
   "devDependencies": {
+    "@radix-ui/react-slot": "^1.0.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "express": "^4.18.2",
+    "lucide-react": "^0.291.0",
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^2.0.0",
+    "tailwindcss-animate": "^1.0.7",
     "@types/connect-livereload": "^0.6.2",
-    "@types/express": "^4.17.20",
+    "@types/express": "^4.17.21",
     "@types/livereload": "^0.9.4",
+    "@types/multer": "^1.4.10",
     "@types/react": "^18.2.33",
     "@types/react-dom": "^18.2.14",
     "chokidar": "^3.5.3",
@@ -31,6 +31,7 @@
     "cpy": "^10.1.0",
     "esbuild": "^0.19.5",
     "livereload": "^0.9.3",
+    "multer": "^1.4.5-lts.1",
     "nodemon": "^3.0.1",
     "react": "^18.2.0",
     "tailwindcss": "^3.3.5"
