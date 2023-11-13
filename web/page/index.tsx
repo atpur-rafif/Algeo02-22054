@@ -1,9 +1,9 @@
 import { createRoot } from "react-dom/client"
-import Dataset from "./route/Dataset"
+import Cbir from "./route/Cbir"
 
 function App(){
     return <div className="w-screen h-screen">
-        <Dataset />
+        <Cbir />
     </div>
 }
 
