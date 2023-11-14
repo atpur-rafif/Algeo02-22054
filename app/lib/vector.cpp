@@ -59,3 +59,15 @@ double Vector::angle(Vector *vectorA, Vector *vectorB){
     return c;
 }
 
+Vectors::Vectors(int size){
+    this->size = size;
+    this->vectors = (Vector**) calloc(size, sizeof(Vector*));
+}
+
+Vectors::~Vectors(){
+    for(int i = 0; i < this->size; ++i){
+        Vector* v = this->vectors[i];
+        if(!v) delete v;
+    }
+    free(this->vectors);
+}

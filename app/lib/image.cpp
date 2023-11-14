@@ -65,7 +65,7 @@ ImageBlocks::ImageBlocks(Image* img, int blockRow, int blockCol){
     this->blockRow = blockRow;
     this->blockCol = blockCol;
 
-    this->blocks = (Block**) malloc(blockRow * blockCol);
+    this->blocks = (Block**) calloc(blockRow * blockCol, sizeof(Block*));
 
     int colStep = this->image->width / blockCol;
     int rowStep = this->image->height / blockRow;
@@ -89,7 +89,10 @@ ImageBlocks::ImageBlocks(Image* img, int blockRow, int blockCol){
 
 ImageBlocks::~ImageBlocks(){
     int len = this->blockCol * this->blockRow;
-    for(int i = 0; i < len; ++i) delete this->blocks[i];
+    for(int i = 0; i < len; ++i){
+        Block* b = this->blocks[i];
+        if(!b) delete b;
+    };
     free(this->blocks);
 }
 
