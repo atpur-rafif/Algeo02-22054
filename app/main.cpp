@@ -17,6 +17,10 @@ using namespace std::chrono;
 set<string> exts = {".png", ".jpg", ".bmp"};
 
 int main(int argc, char** argv){
+    Image *Lena = new Image("./dataset/_.jpg");
+    ImageBlocks* blocks = new ImageBlocks(Lena, 3, 3);
+
+    return 0;
     if(argc != 4){
         printf("Usage: %s [CBIR Type] [Dataset Directory Path] [Target Image Path]\n", argv[0]);
         printf("CBIR Type: \"color\" or \"texture\"\n");
