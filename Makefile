@@ -28,4 +28,4 @@ clean:
 	rm -rf $(OUT_DIR)
 
 all: $(OUT_PATH)
-	$(OUT_DIR)/main
+	$(OUT_DIR)/main color ./dataset ./img/Lena.bmp
