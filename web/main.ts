@@ -5,7 +5,7 @@ import http from "http"
 
 import connectLivereload from "connect-livereload"
 import multer, { diskStorage } from "multer";
-import { readdir } from "fs"
+import { readdirSync, mkdirSync, existsSync } from "fs"
 
 const PAGE = "./page"
 const DATASET = "./dataset"
@@ -15,7 +15,7 @@ const EXE = "./bin/main"
 const app = express();
 const upload = multer({
     storage: diskStorage({
-        destination: resolve(__dirname, UPLOAD),
+        destination: resolve(__dirname, DATASET),
         filename(_, file, callback) {
             callback(null, file.originalname)
         },
@@ -32,12 +32,14 @@ app.get("/api", (req, res) => {
     });
 });
 
-app.get("/dataset", (req, res) => {
-    readdir(DATASET, (_, files) => {
-        res.send(files.map(v => "/dataset/" + v))
-    })
+app.get("/dataset", async (req, res) => {
+    let files = readdirSync(resolve(__dirname, DATASET))
+    if(!files) files = [];
+    res.send(files)
 })
 
+const datasetPath = resolve(__dirname, DATASET)
+if(!existsSync(datasetPath)) mkdirSync(resolve(__dirname, DATASET));
 app.post("/dataset", upload, (req, res) => {
     res.send({})
 })

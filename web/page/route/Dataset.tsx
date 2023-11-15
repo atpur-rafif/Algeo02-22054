@@ -37,30 +37,63 @@ function makeLazyArray<T, U>(values: T[], fn: (param: T) => U): (() => U)[] {
 export default function(){
     const {dimension, container} = useGridTiling({ width: 150, height: 150 })
     const [imageDataset, setImageDataset] = useState<string[]>([])
-    const [imageQueue, setImageQueue] = useState<File[]>([])
     const [currentPage, setCurrentPage] = useState(0)
 
+    const refreshDataset = async () => {
+        const res = await fetch("/dataset")
+        const data = await res.json()
+        setImageDataset(data)
+    }
+
+    const imageQueue = useRef(new (class{
+        maxCount = 10
+        currentCount = 0
+        queue: File[] = []
+        datasetSetter: React.Dispatch<React.SetStateAction<string[]>>
+
+        process(){
+            if(this.queue.length == 0) return
+            if(this.currentCount == this.maxCount) return
+
+            const form = new FormData()
+            form.append("image", this.queue.pop())
+            fetch("/dataset", {
+                method: "POST",
+                body: form
+            }).then(() => {
+                this.currentCount--
+                this.process()
+                refreshDataset()
+            })
+            this.currentCount++
+
+            this.process()
+        }
+
+        push(...files: File[]){
+            this.queue.push(...files)
+            this.process()
+        }
+    })())
+
     useEffect(() => {
-        ;(async () => {
-            const res = await fetch("/dataset")
-            const data = await res.json()
-            setImageDataset(data)
-        })();
+        refreshDataset()
     }, [])
 
     const fileInputHandler: React.FormEventHandler<HTMLInputElement>  = useCallback(function (e) {
-        setImageQueue([...imageQueue, ...Array.from(e.currentTarget.files)])
+        imageQueue.current.push(...Array.from(e.currentTarget.files))
     }, [])
 
     useEffect(() => {
-        console.log(imageQueue)
-    }, [imageQueue])
+        imageQueue.current.datasetSetter = setImageDataset
+    })
+
 
     const paginationSize = dimension.col * dimension.row
     const page: (() => readonly [string, JSX.Element])[] = [
         () => {
             return ["Upload New", <>
-                <label htmlFor="inp-dir" className="w-full h-full flex items-center justify-center cursor-pointer">
+                <label htmlFor="inp-dir" className="w-full h-full flex items-center justify-center cursor-pointer bg-white">
                     <div>
                         Add New<br/>(Folder)
                     </div>
@@ -70,35 +103,34 @@ export default function(){
                 <input id="inp-dir" hidden type="file" multiple directory="true" webkitdirectory="true" onInput={fileInputHandler} />
             </>] as const
         },
-        ...makeLazyArray(imageQueue, (file) => {
-            return [file.name, <div>{file.name}</div>] as const
-        }),
         ...makeLazyArray(imageDataset, (path) => {
             // Create image loader, with loading UI state
-            return [path, <div>
-                <img src={path} />
+            return [path, <div className="max-w-full max-h-full overflow-hidden">
+                <img className="object-contain max-h-[130px] max-w-[130px]" src={"/dataset/" + path} />
+                {/* <img className="object-contain max-h-[100px] max-w-[100px]" src="https://images.unsplash.com/photo-1608848461950-0fe51dfc41cb?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8MXx8fGVufDB8fHx8fA%3D%3D" /> */}
             </div>] as const
         })
     ]
+    const maxPage = Math.ceil(page.length / paginationSize) - 1;
 
-    return <div className="w-full h-full flex flex-col bg-gray-400">
-        <div ref={container} className="w-full h-full grid overflow-hidden gap-2 flex-grow" style={{
+    return <div className="w-full h-full flex flex-col bg-blue-300">
+        <div ref={container} className="w-full h-full grid overflow-hidden gap-2 flex-grow p-5" style={{
             gridTemplateColumns: `repeat(${dimension.col}, 1fr)`,
             gridTemplateRows: `repeat(${dimension.row}, 1fr)`
         }}>
             {page.slice(currentPage * paginationSize, (currentPage + 1) * paginationSize).map(fn => {
                 const [key, el] = fn()
-                return <div className="w-full h-full overflow-hidden" key={key}>
+                return <div className="w-full h-full overflow-hidden flex justify-center items-center bg-white" key={key}>
                     {el}
                 </div>
             })}
         </div>
         <div className="flex-shrink-0 flex flex-col">
-            <div className="h-fit flex-grow bg-white px-10 flex flex-col cursor-grab active:cursor-grabbing">
+            <div className="h-fit flex-grow bg-white px-16 flex flex-col cursor-grab active:cursor-grabbing">
                 <SliderPrimitive.Root
                     className="relative flex-grow h-full"
                     min={0}
-                    max={Math.floor(page.length / paginationSize)}
+                    max={maxPage}
                     defaultValue={[currentPage]}
                     onValueChange={([value]) => setCurrentPage(value)}
                 >
@@ -106,7 +138,7 @@ export default function(){
                         <SliderPrimitive.Range />
                     </SliderPrimitive.Track>
                     <SliderPrimitive.Thumb className="outline-none h-full" >
-                        <div className="w-20 h-full bg-blue-300 text-center">{currentPage}</div>
+                        <div className="w-32 h-full bg-blue-300 text-center">{(currentPage + 1) + "/" + (maxPage + 1)}</div>
                     </SliderPrimitive.Thumb>
                     <div className="opacity-0 pointer-events-none">{currentPage}</div>
                 </SliderPrimitive.Root>
