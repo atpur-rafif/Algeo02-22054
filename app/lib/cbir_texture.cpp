@@ -67,11 +67,6 @@ Vectors *getTextureFeature(Image* img){
         }
     }
 
-    for(int i = 0; i < 3; ++i){
-        vs->vectors[i]->display();
-        printf("\n");
-    }
-
     return vs;
 }
 
