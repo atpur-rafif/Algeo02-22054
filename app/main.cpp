@@ -14,9 +14,10 @@ using namespace std;
 set<string> exts = {".png", ".jpg", ".bmp"};
 
 int main(int argc, char** argv){
-    if(argc != 4){
+    if(!(argc == 3 || argc == 4)){
         printf("Usage: %s [CBIR Type] [Dataset Directory Path] [Target Image Path]\n", argv[0]);
         printf("CBIR Type: \"color\" or \"texture\"\n");
+        printf("Empty target for caching purpose only\n");
         return 0;
     }
 
@@ -32,57 +33,45 @@ int main(int argc, char** argv){
         dataset.push_back(filename);
     }
 
+    bool hasTarget = argc == 4;
     string cbirType = argv[1];
-    string targetPath = argv[3];
+    string targetPath = hasTarget ? argv[3] : "";
     cacheSetup(datasetPath, cbirType);
 
-    Image *targetImage = new Image(targetPath);
-    if(cbirType == "color"){
-        Vectors *targetVectors = getHSVFeatureVector(targetImage, BLOCK);
+    Vectors* (*vectorsFn) (Image*) = NULL;
+    if(cbirType == "color") vectorsFn = getHSVFeatureVector;
+    else if(cbirType == "texture") vectorsFn = getTextureFeature;
 
-        for(const auto filename : dataset){
-            string path = datasetPath + "/" + filename;
-            Vectors *testVectors = getCache(filename);
+    Image *targetImage;
+    Vectors *targetVectors;
+    if(hasTarget){
+        targetImage = new Image(targetPath);
+        targetVectors = vectorsFn(targetImage);
+    }
 
-            if(!testVectors){
-                Image *testImage = new Image(path);
-                testVectors = getHSVFeatureVector(testImage, BLOCK);
-                addCache(filename, testVectors);
-                delete testImage;
-            }
-            
-            double angle = Vectors::getAngleAverage(targetVectors, testVectors);
-            if(angle > 0.6){
-                printf("%s %lf\n", path.c_str(), angle);
-            }
+    for (const auto filename : dataset){
+        string path = datasetPath + "/" + filename;
+        Vectors *testVectors = getCache(filename);
+        bool cacheMiss = testVectors == NULL;
 
-            delete testVectors;
+        if (cacheMiss){
+            Image *testImage = new Image(path);
+            testVectors = vectorsFn(testImage);
+            addCache(filename, testVectors);
+            delete testImage;
         }
-    } else if(cbirType == "texture"){
-        Vectors *targetVectors = getTextureFeature(targetImage);
 
-        for(const auto filename : dataset){
-            string path = datasetPath + "/" + filename;
-            Vectors *testVectors = getCache(filename);
-
-            if (!testVectors){
-                Image *testImage = new Image(path);
-                testVectors = getTextureFeature(testImage);
-                addCache(filename, testVectors);
-                delete testImage;
-            }
-
+        if(hasTarget){
             double angle = Vectors::getAngleAverage(targetVectors, testVectors);
             if (angle > 0.6){
                 printf("%s %lf\n", path.c_str(), angle);
             }
-
-            delete testVectors;
+        } else {
+            if(cacheMiss) printf("Cached %s\n", filename.c_str());
+            else printf("Cache hit\n");
         }
 
-    } else {
-        printf("Invalid CBIR Type: %s", cbirType.c_str());
+        delete testVectors;
     }
-
     cacheCleanup();
 }

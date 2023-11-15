@@ -5,7 +5,7 @@
 #include "image.hpp"
 #define BLOCK 3
 
-Vectors *getHSVFeatureVector(Image *img, int blockSize);
+Vectors *getHSVFeatureVector(Image *img);
 double getColorAngle(Vectors *vs1, Vectors *vs2);
 
 #endif

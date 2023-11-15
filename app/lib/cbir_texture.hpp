@@ -6,7 +6,7 @@
 #include "vector.hpp"
 
 #define QUANTIZATION_LEVEL 256
-#define TEXTURE_RANGE 4
+#define TEXTURE_RANGE 2
 
 Vector *getGLCMVectorFeature(Image* img, int offsetX, int offsetY);
 Vectors *getTextureFeature(Image* img);

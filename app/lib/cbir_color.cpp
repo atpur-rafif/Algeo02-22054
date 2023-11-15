@@ -34,9 +34,9 @@ int getBinV(double v){
     return r;
 }
 
-Vectors *getHSVFeatureVector(Image *img, int blockSize){
-    ImageBlocks *blocks = new ImageBlocks(img, blockSize, blockSize);
-    Vectors* vs = new Vectors(blockSize * blockSize);
+Vectors *getHSVFeatureVector(Image *img){
+    ImageBlocks *blocks = new ImageBlocks(img, BLOCK, BLOCK);
+    Vectors* vs = new Vectors(BLOCK * BLOCK);
 
     for(int i = 0; i < blocks->blockRow; ++i){
         for(int j = 0; j < blocks->blockCol; ++j){
