@@ -21,7 +21,6 @@ public:
     unsigned char *pixel;
     int width;
     int height;
-    int channel;
     RGB getRGB(int x, int y);
     HSV getHSV(int x, int y);
     int getGrayscale(int x, int y);
@@ -35,6 +34,7 @@ class Block{
 public:
     Block(Image* img, int startW, int endW, int startH, int endH);
     RGB getRGB(int x, int y);
+    HSV getHSV(int x, int y);
     Image* image;
     int width;
     int height;

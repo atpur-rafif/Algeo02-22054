@@ -43,17 +43,38 @@ Vector *getGLCMVectorFeature(Image* img, int offsetX, int offsetY){
     return v;
 }
 
-Vector *getTextureFeature(Image* img){
-    Vector *GLCM = getGLCMVectorFeature(img, 1, 1);
-    Vector *res = new Vector(3);
+Vectors *getTextureFeature(Image* img){
+    Vectors *vs = new Vectors(3);
 
-    res->component[0] = getContrast(GLCM);
-    res->component[1] = getHomogeneity(GLCM);
-    res->component[2] = getEntropy(GLCM);
+    int dimension = TEXTURE_RANGE * TEXTURE_RANGE - 1;
+    Vector* contrast = (vs->vectors[0] = new Vector(dimension));
+    Vector* homogenity = (vs->vectors[1] = new Vector(dimension));
+    Vector* entropy = (vs->vectors[2] = new Vector(dimension));
 
-    delete GLCM;
-    return res;
+
+    for(int i = 0; i < TEXTURE_RANGE; ++i){
+        for(int j = 0; j < TEXTURE_RANGE; ++j){
+            if(i == 0 && j == 0) continue;
+
+            Vector *v = getGLCMVectorFeature(img, i, j);
+
+            int idx = i * TEXTURE_RANGE + j - 1;
+            contrast->component[idx] = getContrast(v);
+            homogenity->component[idx] = getHomogeneity(v);
+            entropy->component[idx] = getEntropy(v);
+
+            delete v;
+        }
+    }
+
+    for(int i = 0; i < 3; ++i){
+        vs->vectors[i]->display();
+        printf("\n");
+    }
+
+    return vs;
 }
+
 
 double getContrast(Vector *GLCM){
     double res = 0.0;

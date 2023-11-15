@@ -3,12 +3,14 @@
 #include "utils.hpp"
 
 #define MAX_PATH 200
+#define CHANNEL 3
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.hpp"
 
 Image::Image(string path){
-    this->pixel = stbi_load(path.c_str(), &(this->width), &(this->height), &(this->channel), 3);
+    int tmp;
+    this->pixel = stbi_load(path.c_str(), &(this->width), &(this->height), &tmp, CHANNEL);
 }
 
 Image::~Image(){
@@ -28,7 +30,7 @@ RGB Image::getRGB(int x, int y){
     if(x > this->width) x = this->width - 1;
     if(y > this->height) y = this->height - 1;
 
-    int pos = (y * this->height + x) * this->channel;
+    int pos = ((y * this->width) + x) * CHANNEL;
     return (RGB){this->pixel[pos], this->pixel[pos + 1], this->pixel[pos + 2]};
 }
 
@@ -72,15 +74,15 @@ ImageBlocks::ImageBlocks(Image* img, int blockRow, int blockCol){
 
     for(int i = 0; i < blockRow; ++i){
         for(int j = 0; j < blockCol; ++j){
-            int idx = i * blockRow + blockCol;
+            int idx = i * blockRow + j;
 
-            int startW = i * colStep;
-            int endW = (i + 1) * colStep - 1;
-            int startH = j * rowStep;
-            int endH = (j + 1) * rowStep - 1;
+            int startW = j * colStep;
+            int endW = (j + 1) * colStep - 1;
+            int startH = i * rowStep;
+            int endH = (i + 1) * rowStep - 1;
 
-            if(i == blockRow - 1) endW = this->image->width - 1;
-            if(j == blockCol - 1) endH = this->image->height - 1;
+            if(i == blockRow - 1) endH = this->image->height - 1;
+            if(j == blockCol - 1) endW = this->image->width - 1;
 
             this->blocks[idx] = new Block(img, startW, endW, startH, endH);
         }
@@ -111,4 +113,8 @@ Block::Block(Image* img, int startW, int endW, int startH, int endH){
 
 RGB Block::getRGB(int x, int y){
     return this->image->getRGB(this->x + x, this->y + y);
+}
+
+HSV Block::getHSV(int x, int y){
+    return Image::RGBtoHSV(this->getRGB(x, y));
 }

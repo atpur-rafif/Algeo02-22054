@@ -6,9 +6,10 @@
 #include "vector.hpp"
 
 #define QUANTIZATION_LEVEL 256
+#define TEXTURE_RANGE 4
 
 Vector *getGLCMVectorFeature(Image* img, int offsetX, int offsetY);
-Vector *getTextureFeature(Image* img);
+Vectors *getTextureFeature(Image* img);
 double getContrast(Vector *GLCM);
 double getHomogeneity(Vector *GLCM);
 double getEntropy(Vector *GLCM);

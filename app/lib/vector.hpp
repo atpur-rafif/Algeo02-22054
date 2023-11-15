@@ -20,6 +20,7 @@ public:
     ~Vectors();
     int size;
     Vector** vectors;
+    static double getAngleAverage(Vectors *vs1, Vectors *vs2);
 };
 
 #endif

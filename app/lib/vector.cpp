@@ -71,3 +71,14 @@ Vectors::~Vectors(){
     }
     free(this->vectors);
 }
+
+double Vectors::getAngleAverage(Vectors *vs1, Vectors *vs2){
+    double res = 0;
+    int size = fmin(vs1->size, vs2->size);
+    for (int i = 0; i < size; ++i){
+        res += Vector::angle(vs1->vectors[i], vs2->vectors[i]);
+    }
+    res = res / size;
+
+    return res;
+}
