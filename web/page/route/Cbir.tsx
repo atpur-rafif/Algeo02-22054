@@ -109,6 +109,7 @@ export default function(){
     const fileHandler: FormEventHandler<HTMLInputElement> = (e) => {
         e.preventDefault()
         const file = e.currentTarget.files[0]
+        e.currentTarget.value = null
         checkImage(file)
     }
 
@@ -213,7 +214,7 @@ export default function(){
                         "flex relative max-w-[50vw] max-h-[50vh] group transition-dimension duration-500 justify-center items-center",
                         previewImage ? "" : "max-h-[0px] max-w-[0px]"
                     )}>
-                        <button onClick={() => setImage(null)} className={cn("absolute top-0 right-0 hidden group-hover:block", previewImage ? "" : "hidden")}>
+                        <button onClick={resetter} className={cn("absolute top-0 right-0 hidden group-hover:block", previewImage ? "" : "hidden")}>
                             <X className="bg-red-500 text-white" />
                         </button>
                         <img className="object-scale-down max-w-[inherit] max-h-[inherit]" src={previewImage} />
