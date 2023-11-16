@@ -50,12 +50,12 @@ function OutputView({data, target, performance} : {
                 <img className="object-contain max-w-[200px] max-h-[200px]" src={target} />
             </div>
             {
-                data.slice(currentPage * paginationSize, (currentPage + 1) * paginationSize).map(([path, value]) => {
+                paginationSize > 0 ? data.slice(currentPage * paginationSize, (currentPage + 1) * paginationSize).map(([path, value]) => {
                     return <div key={path} className="overflow-hidden flex flex-col justify-center items-center">
                         <img className="object-contain max-w-[200px] max-h-[200px]" src={`/dataset/${path}`} />
                         <div>{`${path} (${Math.floor(value * 100)}%)`}</div>
                     </div>
-                })
+                }) : null
             }
         </div>
         <div className="flex-shrink-0 flex flex-col">
