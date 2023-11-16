@@ -20,6 +20,7 @@ if(!existsSync(datasetPath)) mkdirSync(datasetPath);
 
 const uploadPath = resolve(__dirname, UPLOAD)
 if(!existsSync(uploadPath)) mkdirSync(uploadPath);
+else { readdirSync(uploadPath).forEach(f => unlinkSync(resolve(uploadPath, f)))}
 
 const exePath = resolve(__dirname, EXE)
 
@@ -169,9 +170,12 @@ wss.addListener("connection", (client) => {
         if(!(method == "color" || method == "texture")) return
         cacheValidation.startListen((msg) => {
             if(msg == MARK_END) {
-                const p = spawn(exePath, [method, datasetPath, resolve(__dirname, UPLOAD, filename)])
+                const p = spawn(exePath, [method, datasetPath, resolve(uploadPath, filename)])
+
+                let stdout = ""
                 p.stdout.setEncoding("utf-8")
                 p.stdout.on("data", (data: string) => {
+                    stdout += data;
                     client.send(JSON.stringify({
                         msg: getLastLine(data),
                         finished: false
@@ -179,8 +183,15 @@ wss.addListener("connection", (client) => {
                 })
 
                 p.on("close", () => {
+                    const data = {}
+                    unlinkSync(resolve(uploadPath, filename))
+                    stdout.split("\n").forEach(l => {
+                        if(!l.trim()) return
+                        const [_, filename, result] = (/\ (.+)\:\ ([0-9\.]+)/gm).exec(l)
+                        data[filename] = parseFloat(result)
+                    })
                     client.send(JSON.stringify({
-                        msg: "Finished",
+                        msg: data,
                         finished: true
                     }))
                 })

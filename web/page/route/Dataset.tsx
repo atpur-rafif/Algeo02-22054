@@ -1,32 +1,7 @@
 import { ElementType, useCallback, useEffect, useRef, useState } from "react"
 import * as SliderPrimitive from "@radix-ui/react-slider"
 import React from "react"
-
-function useGridTiling(size: {
-    width: number,
-    height: number
-}){
-    const container = useRef<HTMLDivElement>()
-
-    const [dimension, setDimension] = useState({
-        col: 0,
-        row: 0
-    })
-
-    useEffect(() => {
-        const observer = new ResizeObserver(([{contentRect: {height, width}}]) => {
-            setDimension({
-                col: Math.floor(width / size.width),
-                row: Math.floor(height / size.height)
-            })
-        })
-        observer.observe(container.current)
-
-        return () => observer.disconnect()
-    }, [])
-
-    return {dimension, container} as const
-}
+import { useGridTiling } from "@/lib/utils"
 
 function makeLazyArray<T, U>(values: T[], fn: (param: T) => U): (() => U)[] {
     return values.map(value => {
