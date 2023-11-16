@@ -59,15 +59,6 @@ void cacheCleanup(){
     ofstream cacheStream(cachePath);
     cacheStream << cache.dump() << endl;
     cacheStream.close();
-
-    json info;
-    for(const auto &it : cache.items()){
-        info.push_back(it.key());
-    }
-
-    ofstream cacheInfoStream(cacheInfoPath);
-    cacheInfoStream << info.dump() << endl;
-    cacheInfoStream.close();
 }
 
 Vectors *getCache(string filename){

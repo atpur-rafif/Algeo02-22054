@@ -80,36 +80,6 @@ const cacheValidation = new (class{
         texture: []
     }
 
-    async getCacheInfo(){
-        let files = readdirSync(datasetPath)
-        if (!files) files = [];
-        else files = files.filter(f => exts.has(getExt(f)))
-
-        let colorInfo: Set<string> = new Set(), textureInfo: Set<string> = new Set();
-
-        const colorInfoPath = `${datasetPath}/__cache_color_info__.json`
-        if (existsSync(colorInfoPath)) {
-            const colorFile = readFileSync(colorInfoPath, "utf-8")
-            colorInfo = new Set(await JSON.parse(colorFile))
-        }
-
-        const textureInfoPath = `${datasetPath}/__cache_color_texture__.json`
-        if (existsSync(textureInfoPath)) {
-            const textureFile = readFileSync(textureInfoPath, "utf-8")
-            textureInfo = new Set(await JSON.parse(textureFile))
-        }
-
-        const info: Record<string, { c: 0 | 1, t: 0 | 1 }> = {}
-        files.forEach(file => {
-            info[file] = {
-                c: colorInfo.has(file) ? 1 : 0,
-                t: textureInfo.has(file) ? 1 : 0
-            }
-        })
-
-        return info
-    }
-
     clearCache() {
         readdirSync(datasetPath).forEach(f => {
             if (f.includes("_cache_")) {
@@ -122,22 +92,20 @@ const cacheValidation = new (class{
         if(this.status[cbirType] == "RUNNING") return
         if(force) this.clearCache()
 
-        this.getCacheInfo().then(v => {
-            this.status[cbirType] = "RUNNING"
-            const p = spawn(exePath, [cbirType, datasetPath])
+        this.status[cbirType] = "RUNNING"
+        const p = spawn(exePath, [cbirType, datasetPath])
 
-            p.stdout.setEncoding("utf-8")
+        p.stdout.setEncoding("utf-8")
 
-            p.stdout.on("data", (data: string) => {
-                data = getLastLine(data.trim())
-                this.listener[cbirType].forEach(fn => fn(data))
-            })
+        p.stdout.on("data", (data: string) => {
+            data = getLastLine(data.trim())
+            this.listener[cbirType].forEach(fn => fn(data))
+        })
 
-            p.on("close", () => {
-                this.status[cbirType] = "IDLE"
-                this.listener[cbirType].forEach(fn => fn(MARK_END))
-                this.listener[cbirType] = []
-            })
+        p.on("close", () => {
+            this.status[cbirType] = "IDLE"
+            this.listener[cbirType].forEach(fn => fn(MARK_END))
+            this.listener[cbirType] = []
         })
     }
 
