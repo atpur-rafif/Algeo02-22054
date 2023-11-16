@@ -162,13 +162,12 @@ export default function(){
     return <div className="w-full h-full flex flex-row justify-center items-center">
 
         <div className={cn(
-            "flex flex-col bg-blue-300 rounded-md transition-[padding] items-center justify-center",
-            pageState == "output" ? "p-0" : "p-5"
+            "flex flex-col bg-blue-300 rounded-md items-center justify-center",
         )}>
 
             <div className={cn(
                 "transition-dimension overflow-hidden",
-                pageState == "input" ? "max-w-[100vw] max-h-[100vh] duration-1000" : "max-w-0 max-h-0 duration-0"
+                pageState == "input" ? "max-w-[100vw] max-h-[100vh] duration-1000 m-5" : "max-w-0 max-h-0 duration-0"
             )}>
 
                 <label htmlFor="inp-file">
@@ -221,7 +220,7 @@ export default function(){
 
             <div className={cn(
                 "transition-dimension overflow-hidden duration-1000 flex flex-col gap-2 whitespace-nowrap",
-                pageState == "loading" ? "max-w-[100vw] max-h-[100vh]" : "max-w-0 max-h-0 delay-300"
+                pageState == "loading" ? "max-w-[100vw] max-h-[100vh] m-5" : "max-w-0 max-h-0 delay-300"
             )}>
                 <div className={cn(
                     "w-96 max-w-[50vw] h-5 bg-white border-2 transition-all",
@@ -238,8 +237,8 @@ export default function(){
             <div
                 onTransitionEnd={(e) => e.currentTarget.style.transition = "none"}
                 className={cn(
-                    "transition-all overflow-hidden flex flex-col gap-2 whitespace-nowrap w-[75vw] h-[75vh] relative",
-                    pageState == "output" ? "duration-1000" : "w-0 h-0"
+                    "transition-all overflow-hidden flex flex-col gap-2 whitespace-nowrap w-[75vw] h-[75vh] relative delay-500",
+                    pageState == "output" ? "duration-1000" : "w-0 h-0 opacity-0"
                 )}>
                     {output ? <OutputView data={output} target={previewImage} performance={null} /> : null}
             </div>
