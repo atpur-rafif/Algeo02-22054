@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string>
 #include <chrono>
+#include <thread>
 #include <set>
 #include <vector>
 #include <dirent.h>
@@ -11,7 +12,7 @@
 #include "lib/cache.hpp"
 
 using namespace std;
-set<string> exts = {".png", ".jpg", ".bmp"};
+set<string> exts = {"png", "jpg", "jpeg", "bmp"};
 
 int main(int argc, char** argv){
     if(!(argc == 3 || argc == 4)){
@@ -28,7 +29,7 @@ int main(int argc, char** argv){
     vector<string> dataset;
     while((tmpDirent = readdir(datasetDir)) != NULL){
         string filename = tmpDirent->d_name;
-        string ext = filename.substr(filename.rfind("."));
+        string ext = filename.substr(filename.rfind(".") + 1);
         if(exts.count(ext) == 0) continue;
         dataset.push_back(filename);
     }
@@ -49,6 +50,7 @@ int main(int argc, char** argv){
         targetVectors = vectorsFn(targetImage);
     }
 
+    int count = 0; int tillCount = dataset.size();
     for (const auto filename : dataset){
         string path = datasetPath + "/" + filename;
         Vectors *testVectors = getCache(filename);
@@ -61,15 +63,16 @@ int main(int argc, char** argv){
             delete testImage;
         }
 
+        ++count;
         if(hasTarget){
             double angle = Vectors::getAngleAverage(targetVectors, testVectors);
-            if (angle > 0.6){
-                printf("%s %lf\n", path.c_str(), angle);
-            }
+            printf("(%d/%d) %s: %lf\n", count, tillCount,  filename.c_str(), angle);
         } else {
-            if(cacheMiss) printf("Cached %s\n", filename.c_str());
-            else printf("Cache hit\n");
+            string msg = "hit";
+            if(cacheMiss) msg = "miss";
+            printf("(%d/%d) Cache %s (%s)\n", count, tillCount,  msg.c_str(), filename.c_str());
         }
+        fflush(stdout);
 
         delete testVectors;
     }
