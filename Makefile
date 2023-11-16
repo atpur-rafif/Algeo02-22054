@@ -28,4 +28,4 @@ clean:
 	rm -rf $(OUT_DIR)
 
 all: $(OUT_PATH)
-	$(OUT_DIR)/main color ./dataset ./dataset/_.jpg
+	$(OUT_DIR)/main texture ./dataset ./dataset/123.jpg

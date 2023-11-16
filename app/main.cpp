@@ -43,11 +43,16 @@ int main(int argc, char** argv){
     if(cbirType == "color") vectorsFn = getHSVFeatureVector;
     else if(cbirType == "texture") vectorsFn = getTextureFeature;
 
+    // Calculate mean and standard deviation [Make sure to do caching to make this faster, beside there won't be any info about cache hit or miss in this operation]
+    if(hasTarget && cbirType == "texture") calculateGaussianProperties(datasetPath, dataset);
+
     Image *targetImage;
     Vectors *targetVectors;
     if(hasTarget){
         targetImage = new Image(targetPath);
         targetVectors = vectorsFn(targetImage);
+
+        if (cbirType == "texture") normalizeWithGaussian(targetVectors);
     }
 
     int count = 0; int tillCount = dataset.size();
@@ -65,6 +70,7 @@ int main(int argc, char** argv){
 
         ++count;
         if(hasTarget){
+            if(cbirType == "texture") normalizeWithGaussian(testVectors);
             double angle = Vectors::getAngleAverage(targetVectors, testVectors);
             printf("(%d/%d) %s: %lf\n", count, tillCount,  filename.c_str(), angle);
         } else {

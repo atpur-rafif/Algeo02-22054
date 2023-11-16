@@ -1,6 +1,13 @@
 #include <limits.h>
 #include <cmath>
+#include <vector>
 #include "cbir_texture.hpp"
+#include "cache.hpp"
+
+using namespace std;
+
+static Vectors *mean = new Vectors(3);
+static Vectors *dev = new Vectors(3);
 
 // Mapping between Matrix component to Vector Component
 int flatten(int x, int y, int yScale){
@@ -71,7 +78,6 @@ Vectors *getTextureFeature(Image* img){
     return vs;
 }
 
-
 double getContrast(Vector *GLCM){
     double res = 0.0;
     for(int i = 0; i < QUANTIZATION_LEVEL; ++i){
@@ -103,4 +109,66 @@ double getEntropy(Vector *GLCM){
         }
     }
     return (-1) * res;
+}
+
+void normalizeWithGaussian(Vectors *vs){
+    int dimension = TEXTURE_RANGE * TEXTURE_RANGE - 1;
+    for (int i = 0; i < 3; ++i){
+        for (int j = 0; j < dimension; ++j){
+            double v = vs->vectors[i]->component[j];
+            v = v - mean->vectors[i]->component[j];
+            v = v / dev->vectors[i]->component[j];
+            vs->vectors[i]->component[j] = v;
+        }
+    }
+}
+
+void calculateGaussianProperties(string datasetPath, vector<string> dataset){
+    mean = new Vectors(3);
+    dev = new Vectors(3);
+
+    int dimension = TEXTURE_RANGE * TEXTURE_RANGE - 1;
+    for (int i = 0; i < 3; ++i){
+        mean->vectors[i] = new Vector(dimension);
+        dev->vectors[i] = new Vector(dimension);
+    }
+
+    int count = 0;
+    for (const auto filename : dataset){
+        string path = datasetPath + "/" + filename;
+        Vectors *testVectors = getCache(filename);
+        bool cacheMiss = testVectors == NULL;
+
+        if (cacheMiss){
+            Image *testImage = new Image(path);
+            testVectors = getTextureFeature(testImage);
+            delete testImage;
+        }
+
+        for (int i = 0; i < 3; ++i){
+            for (int j = 0; j < dimension; ++j){
+                double r = testVectors->vectors[i]->component[j];
+                mean->vectors[i]->component[j] += r;
+                dev->vectors[i]->component[j] += r * r;
+            }
+        }
+        ++count;
+
+        delete testVectors;
+    }
+
+    for (int i = 0; i < 3; ++i){
+        for (int j = 0; j < dimension; ++j){
+            double m = mean->vectors[i]->component[j];
+            double d = dev->vectors[i]->component[j];
+
+            m = m / count;
+            d = d / count;
+            d = d - (m * m);
+            d = sqrt(d);
+
+            mean->vectors[i]->component[j] = m;
+            dev->vectors[i]->component[j] = d;
+        }
+    }
 }
