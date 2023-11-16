@@ -1,6 +1,6 @@
 import { cn, useGridTiling } from "@/lib/utils"
 import * as SliderPrimitive from "@radix-ui/react-slider"
-import { Upload, X } from "lucide-react"
+import { Upload, X, XIcon } from "lucide-react"
 import { DragEventHandler, FormEventHandler, useEffect, useRef, useState } from "react"
 import { wsURL } from ".."
 
@@ -26,19 +26,19 @@ const getProgress = (out: string) => {
     }
 }
 
-function OutputView({data, target, performance} : {
-    data: [string, number][],
+type OutputViewData = {
     target: string,
-    performance: {
-        cache: number,
-        compare: number
-    }
-}){
+    result: [string, number][],
+    resetter: () => void;
+    time: number
+}
+
+function OutputView({target, result, time, resetter} : OutputViewData){
     const {container, dimension} = useGridTiling({ width: 250, height: 250 })
     const [currentPage, setCurrentPage] = useState<number>(0)
 
     const paginationSize =  dimension.col * dimension.row - 1
-    const maxPage = Math.ceil(data.length / paginationSize) - 1
+    const maxPage = Math.ceil(result.length / paginationSize) - 1
 
     return <div className="absolute flex flex-col w-[75vw] h-[75vh]">
         <div ref={container} className="flex-grow grid overflow-hidden gap-2" style={{
@@ -48,9 +48,13 @@ function OutputView({data, target, performance} : {
 
             <div className="bg-white w-full h-full overflow-hidden flex justify-center items-center rounded-br-xl flex-col relative">
                 <img className="object-contain max-w-[200px] max-h-[200px]" src={target} />
+                <button onClick={resetter}>
+                    <XIcon className="bg-red-500 text-white absolute top-0 right-0" />
+                </button>
+                <div>{time}ms</div>
             </div>
             {
-                paginationSize > 0 ? data.slice(currentPage * paginationSize, (currentPage + 1) * paginationSize).map(([path, value]) => {
+                paginationSize > 0 ? result.slice(currentPage * paginationSize, (currentPage + 1) * paginationSize).map(([path, value]) => {
                     return <div key={path} className="overflow-hidden flex flex-col justify-center items-center">
                         <img className="object-contain max-w-[200px] max-h-[200px]" src={`/dataset/${path}`} />
                         <div>{`${path} (${Math.floor(value * 100)}%)`}</div>
@@ -84,9 +88,10 @@ export default function(){
     const [image, setImage] = useState<File>()
     const [previewImage, setPreviewImage] = useState<string>()
     const [pageState, setPageState] = useState<"input" | "loading" | "output">("input")
-    const [output, setOutput] = useState<[string, number][]>(null)
     const [progress, setProgress] = useState<number>(0)
     const [msg, setMsg] = useState<string>("")
+
+    const [outputViewData, setOutputViewData] = useState<OutputViewData>(null)
 
     const checkImage = (file: File) => {
         if (!file) return
@@ -116,9 +121,17 @@ export default function(){
         }
     }, [image])
 
+    const resetter = () => {
+        setImage(null)
+        setPreviewImage(null)
+        setPageState("input")
+        setProgress(0)
+        setMsg("")
+    }
+
     const wscRef = useRef<WebSocket>()
     const cbirHandler = async (method: string) => {
-        setOutput(null)
+        setOutputViewData(null)
         setPageState("loading")
         setMsg("Uploading...")
         setProgress(0)
@@ -141,12 +154,15 @@ export default function(){
         })
 
         wscRef.current.addEventListener("message", async ({data: raw}) => {
-            const { msg, finished } = await JSON.parse(raw)
+            const { msg, finished, time } = await JSON.parse(raw)
             if(finished){
-                const output = Object.entries(msg).sort(([_1, v1], [_2, v2]) => {
-                    return (v2 as number) - (v1 as number);
+                const result = Object.entries(msg as Record<string, number>).filter(([_, v]) => v >= 0.6).sort(([_1, v1], [_2, v2]) => {
+                    return v2 - v1
+                }) as any
+                setOutputViewData({
+                    result, time, resetter,
+                    target: previewImage,
                 })
-                setOutput(output as any)
             } else {
                 const prog = getProgress(msg)
                 if(!Number.isNaN(prog)) setProgress(getProgress(msg))
@@ -156,8 +172,8 @@ export default function(){
     }
 
     useEffect(() => {
-        if(output != null) setPageState("output")
-    }, [output])
+        if(outputViewData != null) setPageState("output")
+    }, [outputViewData])
 
     return <div className="w-full h-full flex flex-row justify-center items-center">
 
@@ -166,8 +182,8 @@ export default function(){
         )}>
 
             <div className={cn(
-                "transition-dimension overflow-hidden",
-                pageState == "input" ? "max-w-[100vw] max-h-[100vh] duration-1000 m-5" : "max-w-0 max-h-0 duration-0"
+                "transition-all overflow-hidden",
+                pageState == "input" ? "max-w-[100vw] max-h-[100vh] duration-1000 delay-500 m-5" : "max-w-0 max-h-0 duration-0"
             )}>
 
                 <label htmlFor="inp-file">
@@ -192,9 +208,9 @@ export default function(){
                     <input id="inp-file" type="file" onInput={fileHandler} hidden />
                 </label>
 
-                <div className="flex flex-row relative">
+                <div className="flex flex-row justify-center items-center relative">
                     <div className={cn(
-                        "flex relative max-w-[50vw] max-h-[50vh] group transition-dimension",
+                        "flex relative max-w-[50vw] max-h-[50vh] group transition-dimension duration-500 justify-center items-center",
                         previewImage ? "" : "max-h-[0px] max-w-[0px]"
                     )}>
                         <button onClick={() => setImage(null)} className={cn("absolute top-0 right-0 hidden group-hover:block", previewImage ? "" : "hidden")}>
@@ -235,12 +251,23 @@ export default function(){
             </div>
 
             <div
-                onTransitionEnd={(e) => e.currentTarget.style.transition = "none"}
                 className={cn(
-                    "transition-all overflow-hidden flex flex-col gap-2 whitespace-nowrap w-[75vw] h-[75vh] relative delay-500",
-                    pageState == "output" ? "duration-1000" : "w-0 h-0 opacity-0"
+                    "transition-all overflow-hidden flex flex-col gap-2 whitespace-nowrap w-[75vw] h-[75vh] relative duration-700",
+                    pageState == "output" ? "delay-500" : "w-0 h-0 opacity-0"
                 )}>
-                    {output ? <OutputView data={output} target={previewImage} performance={null} /> : null}
+                {outputViewData ?
+                    (outputViewData.result.length == 0 ?
+                        <div className="flex flex-col w-full h-full justify-center items-center">
+                            <div className="relative">
+                                <button onClick={resetter} className="absolute top-0 right-0">
+                                    <XIcon className="text-white bg-red-600" />
+                                </button>
+                                <img className="max-w-[40vw] max-h-[40vh] rounded-lg" src="/chicken.webp" />
+                            </div>
+                            <p>Nobody here but us chickens</p>
+                        </div> :
+                        <OutputView {...outputViewData} />)
+                    : null}
             </div>
 
         </div>

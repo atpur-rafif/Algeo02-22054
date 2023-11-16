@@ -145,6 +145,7 @@ wss.addListener("connection", (client) => {
     client.addEventListener("message", async ({data}) => {
         const { method, filename, force } = await JSON.parse(data as string)
         if(!(method == "color" || method == "texture")) return
+        const start = performance.now()
         cacheValidation.startListen((msg) => {
             if(msg == MARK_END) {
                 const p = spawn(exePath, [method, datasetPath, resolve(uploadPath, filename)])
@@ -160,6 +161,8 @@ wss.addListener("connection", (client) => {
                 })
 
                 p.on("close", () => {
+                    const end = performance.now()
+
                     const data = {}
                     unlinkSync(resolve(uploadPath, filename))
                     stdout.split("\n").forEach(l => {
@@ -169,7 +172,8 @@ wss.addListener("connection", (client) => {
                     })
                     client.send(JSON.stringify({
                         msg: data,
-                        finished: true
+                        finished: true,
+                        time: Math.floor(end - start)
                     }))
                 })
             } else client.send(JSON.stringify({msg, finished: false}))
