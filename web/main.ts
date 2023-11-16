@@ -72,7 +72,13 @@ const cacheValidation = new (class{
     }
     colorStatus: "IDLE" | "RUNNING" = "IDLE"
     progress: number = 0
-    listener: cacheValidationListener[] = []
+    listener: {
+        color: cacheValidationListener[],
+        texture: cacheValidationListener[]
+    } = {
+        color: [],
+        texture: []
+    }
 
     async getCacheInfo(){
         let files = readdirSync(datasetPath)
@@ -124,23 +130,19 @@ const cacheValidation = new (class{
 
             p.stdout.on("data", (data: string) => {
                 data = getLastLine(data.trim())
-                this.listener.forEach(fn => fn(data))
+                this.listener[cbirType].forEach(fn => fn(data))
             })
 
             p.on("close", () => {
                 this.status[cbirType] = "IDLE"
-                this.listener.forEach(fn => fn(MARK_END))
-                this.listener = []
+                this.listener[cbirType].forEach(fn => fn(MARK_END))
+                this.listener[cbirType] = []
             })
         })
     }
 
-    startListen(fn: cacheValidationListener){
-        this.listener.push(fn)
-    }
-
-    stopListen(fn: cacheValidationListener){
-        this.listener = this.listener.filter(f => f == fn)
+    startListen(fn: cacheValidationListener, type: "color" | "texture"){
+        this.listener[type].push(fn)
     }
 })()
 
@@ -203,7 +205,7 @@ wss.addListener("connection", (client) => {
                     }))
                 })
             } else client.send(JSON.stringify({msg, finished: false}))
-        })
+        }, method)
         cacheValidation.revalidate(method, force)
     })
 })
