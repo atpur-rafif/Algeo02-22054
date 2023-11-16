@@ -63,7 +63,14 @@ const uploadTarget = multer({
 
 type cacheValidationListener = (msg: string) => void
 const cacheValidation = new (class{
-    status: "IDLE" | "RUNNING" = "IDLE"
+    status: {
+        color: "IDLE" | "RUNNING",
+        texture: "IDLE" | "RUNNING"
+    } = {
+        color: "IDLE",
+        texture: "IDLE"
+    }
+    colorStatus: "IDLE" | "RUNNING" = "IDLE"
     progress: number = 0
     listener: cacheValidationListener[] = []
 
@@ -106,11 +113,11 @@ const cacheValidation = new (class{
     }
 
     revalidate(cbirType: "color" | "texture", force?: boolean){
-        if(this.status == "RUNNING") return
+        if(this.status[cbirType] == "RUNNING") return
         if(force) this.clearCache()
 
         this.getCacheInfo().then(v => {
-            this.status = "RUNNING"
+            this.status[cbirType] = "RUNNING"
             const p = spawn(exePath, [cbirType, datasetPath])
 
             p.stdout.setEncoding("utf-8")
@@ -121,7 +128,7 @@ const cacheValidation = new (class{
             })
 
             p.on("close", () => {
-                this.status = "IDLE"
+                this.status[cbirType] = "IDLE"
                 this.listener.forEach(fn => fn(MARK_END))
                 this.listener = []
             })

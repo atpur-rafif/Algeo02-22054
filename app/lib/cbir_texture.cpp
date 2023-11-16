@@ -1,4 +1,5 @@
 #include <limits.h>
+#include <cmath>
 #include "cbir_texture.hpp"
 
 // Mapping between Matrix component to Vector Component
