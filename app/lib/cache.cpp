@@ -6,17 +6,17 @@
 using json = nlohmann::json;
 static json cache = NULL;
 string cachePath;
-string cacheInfoPath;
+string cacheStatusPath;
 
 void cacheSetup(string path, string type){
     if(cache != NULL) return;
 
     if(type == "color"){
         cachePath = path + "/__cache_color__.json";
-        cacheInfoPath = path + "/__cache_color_info__.json";
+        cacheStatusPath = path + "/__cache_color_status__.json";
     } else if(type == "texture"){
         cachePath = path + "/" + "__cache_texture__.json";
-        cacheInfoPath = path + "/__cache_texture_info__.json";
+        cacheStatusPath = path + "/__cache_texture_status__.json";
     }
 
     bool fail = false;
@@ -59,6 +59,15 @@ void cacheCleanup(){
     ofstream cacheStream(cachePath);
     cacheStream << cache.dump() << endl;
     cacheStream.close();
+
+    json status;
+    for(const auto &it : cache.items()){
+        status.push_back(it.key());
+    }
+
+    ofstream cacheStatusStream(cacheStatusPath);
+    cacheStatusStream << status.dump() << endl;
+    cacheStatusStream.close();
 }
 
 Vectors *getCache(string filename){

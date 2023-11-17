@@ -140,7 +140,7 @@ export default function(){
     }
 
     const wscRef = useRef<WebSocket>()
-    const cbirHandler = async (method: string) => {
+    const cbirHandler = async (type: string) => {
         setOutputViewData(null)
         setPageState("loading")
         setMsg("Uploading...")
@@ -149,8 +149,8 @@ export default function(){
         const formData = new FormData()
         formData.append("image", image)
 
-        formData.append("type", method)
-        const { filename } = await (await fetch("/cbir", {
+        formData.append("type", type)
+        const { filename } = await (await fetch("/api/cbir", {
             method: "POST",
             body: formData
         })).json()
@@ -158,7 +158,7 @@ export default function(){
         const wsc = new WebSocket(wsURL)
         wsc.addEventListener("open", () => {
             wsc.send(JSON.stringify({
-                method, filename,
+                type, filename,
                 force: false
             }))
         })

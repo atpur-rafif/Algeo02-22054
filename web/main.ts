@@ -61,67 +61,89 @@ const uploadTarget = multer({
     fileFilter: imageFilter
 }).single("image")
 
-type cacheValidationListener = (msg: string) => void
-const cacheValidation = new (class{
-    status: {
-        color: "IDLE" | "RUNNING",
-        texture: "IDLE" | "RUNNING"
-    } = {
-        color: "IDLE",
-        texture: "IDLE"
-    }
-    colorStatus: "IDLE" | "RUNNING" = "IDLE"
-    progress: number = 0
-    listener: {
-        color: cacheValidationListener[],
-        texture: cacheValidationListener[]
-    } = {
-        color: [],
-        texture: []
-    }
-
-    clearCache() {
-        readdirSync(datasetPath).forEach(f => {
-            if (f.includes("_cache_")) {
-                unlinkSync(resolve(datasetPath, f));
-            }
-        })
-    }
-
-    revalidate(cbirType: "color" | "texture", force?: boolean){
-        if(this.status[cbirType] == "RUNNING") return
-        if(force) this.clearCache()
-
-        this.status[cbirType] = "RUNNING"
-        const p = spawn(exePath, [cbirType, datasetPath])
-
-        p.stdout.setEncoding("utf-8")
-
-        p.stdout.on("data", (data: string) => {
-            data = getLastLine(data.trim())
-            this.listener[cbirType].forEach(fn => fn(data))
-        })
-
-        p.on("close", () => {
-            this.status[cbirType] = "IDLE"
-            this.listener[cbirType].forEach(fn => fn(MARK_END))
-            this.listener[cbirType] = []
-        })
-    }
-
-    startListen(fn: cacheValidationListener, type: "color" | "texture"){
-        this.listener[type].push(fn)
-    }
-})()
-
-app.use(connectLivereload());
-
 const getDataset = () => {
     let files = readdirSync(resolve(__dirname, DATASET))
     if(!files) files = [];
     files = files.filter(file => exts.has(getExt(file)))
     return files
 }
+
+type CacheManagerListener = (msg: string) => void
+type CacheManagerStatus = "IDLE" | "RUNNING"
+class CacheManager{
+    type: string
+    cachePath: string
+    cacheStatusPath: string
+    status: CacheManagerStatus = "IDLE"
+    listener: CacheManagerListener[] = []
+
+    constructor(cbirType: "color" | "texture"){
+        this.type = cbirType
+        this.cachePath = resolve(datasetPath, `__cache_${this.type}__.json`)
+        this.cacheStatusPath = resolve(datasetPath, `__cache_${this.type}_status__.json`)
+    }
+
+    clearCache(){
+        unlinkSync(this.cachePath)
+        unlinkSync(this.cacheStatusPath)
+    }
+
+    checkStale(){
+        try {
+            const file = readFileSync(resolve(datasetPath, `__cache_${this.type}_status__.json`), "utf-8")
+            const json: string[] = JSON.parse(file)
+
+            const dataset = new Set(getDataset())
+            json.forEach(file => {
+                dataset.delete(file)
+            })
+
+            return dataset.size != 0
+        } catch (error) {
+            return true
+        }
+    }
+
+    // Return true if need revalidation, and false if cache fresh
+    revalidate(): boolean{
+        if(!this.checkStale()) return false
+        if(this.status == "RUNNING") return true
+
+        this.status = "RUNNING"
+        const p = spawn(exePath, [this.type, datasetPath])
+
+        p.stdout.setEncoding("utf-8")
+
+        p.stdout.on("data", (data: string) => {
+            data = getLastLine(data.trim())
+            this.listener.forEach(fn => fn(data))
+        })
+
+        p.on("close", () => {
+            this.status = "IDLE"
+            this.listener.forEach(fn => fn(MARK_END))
+            this.listener = []
+        })
+
+        return true;
+    }
+
+    startListen(fn: CacheManagerListener){
+        this.listener.push(fn)
+    }
+}
+
+const cacheManager = {
+    color: new CacheManager("color"),
+    texture: new CacheManager("texture")
+}
+
+const clearAllCache = () => {
+    cacheManager.color.clearCache()
+    cacheManager.texture.clearCache()
+}
+
+app.use(connectLivereload());
 
 app.get("/api/dataset", async (_, res) => {
    res.send(getDataset())
@@ -134,8 +156,13 @@ app.get("/api/dataset/count", async (_, res) => {
 })
 
 app.delete("/api/dataset", (_, res) => {
-    cacheValidation.clearCache()
+    clearAllCache()
     readdirSync(datasetPath).forEach(f => unlinkSync(resolve(datasetPath, f)))
+    res.send({})
+})
+
+app.delete("/api/dataset/cache", (_, res) => {
+    clearAllCache()
     res.send({})
 })
 
@@ -146,7 +173,7 @@ app.post("/api/dataset", uploadDataset, (_, res) => {
 app.use(express.static(resolve(__dirname, PAGE)));
 app.use("/dataset", express.static(resolve(__dirname, DATASET)));
 
-app.post("/cbir", uploadTarget, async (req, res) => {
+app.post("/api/cbir", uploadTarget, async (req, res) => {
     res.json({ filename: req.file?.filename } )
 })
 
@@ -160,13 +187,13 @@ const wss = new WebSocketServer({
 
 wss.addListener("connection", (client) => {
     client.addEventListener("message", async ({data}) => {
-        const { method, filename, force, revalidate } = await JSON.parse(data as string)
-        if(!(method == "color" || method == "texture")) return
+        const { type, filename, force } = await JSON.parse(data as string)
+        if(!(type == "color" || type == "texture")) return
 
         const start = performance.now()
 
         const compareProcess = () => {
-            const p = spawn(exePath, [method, datasetPath, resolve(uploadPath, filename)])
+            const p = spawn(exePath, [type, datasetPath, resolve(uploadPath, filename)])
 
             let stdout = ""
             p.stdout.setEncoding("utf-8")
@@ -199,12 +226,12 @@ wss.addListener("connection", (client) => {
             })
         }
 
-        if (revalidate) {
-            cacheValidation.startListen((msg) => {
-                if (msg == MARK_END) compareProcess()
+        const cm = cacheManager[type] as CacheManager
+        if(cm.revalidate()){
+            cm.startListen((msg) => {
+                if(msg == MARK_END) compareProcess()
                 else client.send(JSON.stringify({ msg, finished: false }))
-            }, method)
-            cacheValidation.revalidate(method, force)
+            })
         } else {
             compareProcess()
         }
