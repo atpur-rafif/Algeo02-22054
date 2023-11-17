@@ -200,6 +200,6 @@ wss.addListener("connection", (client) => {
     })
 })
 
-server.listen(80, () => {
-    console.log("Serving at http://localhost:80");
+server.listen(8080, () => {
+    console.log("Serving at http://localhost:8080");
 });
