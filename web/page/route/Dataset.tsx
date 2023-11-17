@@ -127,7 +127,7 @@ export default function(){
             </button>]
         },
         () => {
-            return ["Delete All", <button className="w-full h-full flex items-center justify-center bg-white" onClick={clearCacheHandler}>
+            return ["Clear Cache", <button className="w-full h-full flex items-center justify-center bg-white" onClick={clearCacheHandler}>
                 <div className="flex flex-col text-sm justify-center items-center">
                     <RefreshCcw className="w-16 h-16" />
                     <p>Clear Cache</p>
