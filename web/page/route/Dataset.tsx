@@ -2,6 +2,8 @@ import { ElementType, useCallback, useEffect, useRef, useState } from "react"
 import * as SliderPrimitive from "@radix-ui/react-slider"
 import React from "react"
 import { useGridTiling } from "@/lib/utils"
+import { setNavbarInfo } from "./Root"
+import { Folder } from "lucide-react"
 
 function makeLazyArray<T, U>(values: T[], fn: (param: T) => U): (() => U)[] {
     return values.map(value => {
@@ -15,7 +17,7 @@ export default function(){
     const [currentPage, setCurrentPage] = useState(0)
 
     const refreshDataset = async () => {
-        const res = await fetch("/dataset")
+        const res = await fetch("/api/dataset")
         const data = await res.json()
         setImageDataset(data)
     }
@@ -32,13 +34,15 @@ export default function(){
 
             const form = new FormData()
             form.append("image", this.queue.pop())
-            fetch("/dataset", {
+            fetch("/api/dataset", {
                 method: "POST",
                 body: form
             }).then(() => {
                 this.currentCount--
                 this.process()
                 refreshDataset()
+                setNavbarInfo(<p className="w-full text-center">{`Uploading... (${this.queue.length} remaining)`}</p>)
+                if(this.queue.length == 0) setNavbarInfo(null)
             })
             this.currentCount++
 
@@ -63,14 +67,15 @@ export default function(){
         imageQueue.current.datasetSetter = setImageDataset
     })
 
-
     const paginationSize = dimension.col * dimension.row
     const page: (() => readonly [string, JSX.Element])[] = [
         () => {
             return ["Upload New", <>
                 <label htmlFor="inp-dir" className="w-full h-full flex items-center justify-center cursor-pointer bg-white">
-                    <div>
-                        Add New<br/>(Folder)
+                    <div className="flex flex-col text-sm justify-center items-center">
+                        <Folder className="w-16 h-16" />
+                        <p>Add New</p>
+                        <p>(Folder)</p>
                     </div>
                 </label>
                 {/* 
@@ -80,7 +85,7 @@ export default function(){
         },
         ...makeLazyArray(imageDataset, (path) => {
             // Create image loader, with loading UI state
-            return [path, <div className="max-w-full max-h-full overflow-hidden">
+            return [path, <div className="max-w-full max-h-full overflow-hidden border-4 border-blue-300">
                 <img className="object-contain max-h-[130px] max-w-[130px]" src={"/dataset/" + path} />
                 {/* <img className="object-contain max-h-[100px] max-w-[100px]" src="https://images.unsplash.com/photo-1608848461950-0fe51dfc41cb?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8MXx8fGVufDB8fHx8fA%3D%3D" /> */}
             </div>] as const
@@ -88,7 +93,7 @@ export default function(){
     ]
     const maxPage = Math.ceil(page.length / paginationSize) - 1;
 
-    return <div className="w-full h-full flex flex-col bg-blue-300">
+    return <div className="w-screen h-screen flex flex-col">
         <div ref={container} className="w-full h-full grid overflow-hidden gap-2 flex-grow p-5" style={{
             gridTemplateColumns: `repeat(${dimension.col}, 1fr)`,
             gridTemplateRows: `repeat(${dimension.row}, 1fr)`

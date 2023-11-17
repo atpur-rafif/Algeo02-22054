@@ -116,13 +116,31 @@ const cacheValidation = new (class{
 
 app.use(connectLivereload());
 
-app.get("/dataset", async (_, res) => {
+const getDataset = () => {
     let files = readdirSync(resolve(__dirname, DATASET))
     if(!files) files = [];
+    files = files.filter(file => exts.has(getExt(file)))
+    return files
+}
+
+app.get("/api/dataset", async (_, res) => {
+   res.send(getDataset())
+})
+
+app.get("/api/dataset/count", async (_, res) => {
+    res.send({
+        count: getDataset().length
+    })
+})
+
+app.get("/api/dataset", async (_, res) => {
+    let files = readdirSync(resolve(__dirname, DATASET))
+    if(!files) files = [];
+    files = files.filter(file => exts.has(getExt(file)))
     res.send(files)
 })
 
-app.post("/dataset", uploadDataset, (_, res) => {
+app.post("/api/dataset", uploadDataset, (_, res) => {
     res.send({})
 })
 

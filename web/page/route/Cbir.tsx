@@ -3,6 +3,7 @@ import * as SliderPrimitive from "@radix-ui/react-slider"
 import { Upload, X, XIcon } from "lucide-react"
 import { DragEventHandler, FormEventHandler, useEffect, useRef, useState } from "react"
 import { wsURL } from ".."
+import { setNavbarInfo } from "./Root"
 
 function FileToBase64(file: File): Promise<string>{
     return new Promise((resolve) => {
@@ -51,7 +52,7 @@ function OutputView({target, result, time, resetter} : OutputViewData){
                 <button onClick={resetter}>
                     <XIcon className="bg-red-500 text-white absolute top-0 right-0" />
                 </button>
-                <div>{time}ms</div>
+                <div>Found {result.length} match in {time}ms</div>
             </div>
             {
                 paginationSize > 0 ? result.slice(currentPage * paginationSize, (currentPage + 1) * paginationSize).map(([path, value]) => {
@@ -92,6 +93,14 @@ export default function(){
     const [msg, setMsg] = useState<string>("")
 
     const [outputViewData, setOutputViewData] = useState<OutputViewData>(null)
+
+    useEffect(() => {
+        (async () => {
+            const res = await fetch("/api/dataset/count")
+            const { count } = await res.json()
+            if(count == 0) setNavbarInfo(<p className="text-red-500 w-full text-center">Dataset Empty!</p>)
+        })()
+    }, [])
 
     const checkImage = (file: File) => {
         if (!file) return
