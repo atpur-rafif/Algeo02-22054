@@ -20,7 +20,7 @@ if(!existsSync(datasetPath)) mkdirSync(datasetPath);
 
 const uploadPath = resolve(__dirname, UPLOAD)
 if(!existsSync(uploadPath)) mkdirSync(uploadPath);
-else { readdirSync(uploadPath).forEach(f => unlinkSync(resolve(uploadPath, f)))}
+else { readdirSync(uploadPath).forEach(f => unlinkSync(resolve(uploadPath, f))) }
 
 const exePath = resolve(__dirname, EXE)
 
@@ -133,11 +133,10 @@ app.get("/api/dataset/count", async (_, res) => {
     })
 })
 
-app.get("/api/dataset", async (_, res) => {
-    let files = readdirSync(resolve(__dirname, DATASET))
-    if(!files) files = [];
-    files = files.filter(file => exts.has(getExt(file)))
-    res.send(files)
+app.delete("/api/dataset", (_, res) => {
+    cacheValidation.clearCache()
+    readdirSync(datasetPath).forEach(f => unlinkSync(resolve(datasetPath, f)))
+    res.send({})
 })
 
 app.post("/api/dataset", uploadDataset, (_, res) => {

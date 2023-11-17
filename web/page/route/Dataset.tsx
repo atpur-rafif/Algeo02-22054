@@ -3,7 +3,7 @@ import * as SliderPrimitive from "@radix-ui/react-slider"
 import React from "react"
 import { useGridTiling } from "@/lib/utils"
 import { setNavbarInfo } from "./Root"
-import { Folder } from "lucide-react"
+import { Folder, Trash2 } from "lucide-react"
 
 function makeLazyArray<T, U>(values: T[], fn: (param: T) => U): (() => U)[] {
     return values.map(value => {
@@ -78,6 +78,16 @@ export default function(){
         imageQueue.current.push(...Array.from(e.currentTarget.files))
     }, [])
 
+    const deleteAllHandler = useCallback(() => {
+        if (confirm("Are you sure want to delete all images from dataset?")) {
+            fetch("/api/dataset", {
+                method: "DELETE"
+            }).then(() => {
+                refreshDataset()
+            })
+        }
+    }, [])
+
     useEffect(() => {
         imageQueue.current.datasetSetter = setImageDataset
     })
@@ -97,6 +107,14 @@ export default function(){
                 // @ts-expect-error */}
                 <input id="inp-dir" hidden type="file" multiple directory="true" webkitdirectory="true" onInput={fileInputHandler} />
             </>] as const
+        },
+        () => {
+            return ["Delete All", <button className="w-full h-full flex items-center justify-center bg-white" onClick={deleteAllHandler}>
+                <div className="flex flex-col text-sm justify-center items-center">
+                    <Trash2 className="w-16 h-16" />
+                    <p>Delete All</p>
+                </div>
+            </button>]
         },
         ...makeLazyArray(imageDataset, (path) => {
             // Create image loader, with loading UI state
