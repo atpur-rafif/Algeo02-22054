@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { wsURL } from ".."
 import { OutputViewData, getProgress } from "./Cbir"
-const method = "color"
+const type = "color"
 
 export default function Camera(){
     const videoRef = useRef<HTMLVideoElement>()
@@ -29,9 +29,9 @@ export default function Camera(){
             const formData = new FormData()
             const file = new File([blob], "capture.png")
             formData.append("image", file)
-            formData.append("type", method)
+            formData.append("type", type)
 
-            const { filename } = await (await fetch("/cbir", {
+            const { filename } = await (await fetch("/api/cbir", {
                 method: "POST",
                 body: formData
             })).json()
@@ -39,13 +39,13 @@ export default function Camera(){
             const wsc = new WebSocket(wsURL)
             wsc.addEventListener("open", () => {
                 wsc.send(JSON.stringify({
-                    method, filename,
+                    type, filename,
                     force: false,
                 }))
             })
 
             wsc.addEventListener("message", async ({ data: raw }) => {
-                const { msg, finished, time } = await JSON.parse(raw)
+                const { msg, finished } = await JSON.parse(raw)
                 if (finished) {
                     const result = Object.entries(msg as Record<string, number>).sort(([_1, v1], [_2, v2]) => {
                         return v2 - v1
@@ -84,11 +84,6 @@ export default function Camera(){
         })
     }, [])
 
-    useEffect(() => {
-        console.log(output)
-    }, [output])
-
-
     return <div className="flex w-full h-full items-center justify-center">
         <div className="max-w-[75vw] max-h-[75vh] flex flex-col items-center justify-center">
             <video className="bg-black max-w-[50vw] max-h-[50vw]" ref={videoRef} />
@@ -99,7 +94,7 @@ export default function Camera(){
             <div className="flex flex-row">
                 {/* <img src={previewImage} className="max-w-[100px] max-h-[100px]" /> */}
                 {output ? output.slice(0, 3).map(([name, value]) => {
-                    return <img className="max-w-[10vw] max-h-[10vh]" src={`/dataset/${name}`} />
+                    return <img key={name} className="max-w-[10vw] max-h-[10vh]" src={`/dataset/${name}`} />
                 }) : null}
             </div>
         </div>

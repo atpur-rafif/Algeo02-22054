@@ -135,10 +135,8 @@ export default function(){
             </button>]
         },
         ...makeLazyArray(imageDataset, (path) => {
-            // Create image loader, with loading UI state
             return [path, <div className="max-w-full max-h-full overflow-hidden border-4 border-blue-300">
                 <img className="object-contain max-h-[130px] max-w-[130px]" src={"/dataset/" + path} />
-                {/* <img className="object-contain max-h-[100px] max-w-[100px]" src="https://images.unsplash.com/photo-1608848461950-0fe51dfc41cb?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8MXx8fGVufDB8fHx8fA%3D%3D" /> */}
             </div>] as const
         })
     ]
