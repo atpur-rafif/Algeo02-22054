@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react"
 import { wsURL } from ".."
+import * as SwitchPrimitive from "@radix-ui/react-switch"
 import { OutputViewData, getProgress } from "./Cbir"
-const type = "color"
+import { cn } from "@/lib/utils"
 
 export default function Camera(){
     const videoRef = useRef<HTMLVideoElement>()
@@ -9,6 +10,7 @@ export default function Camera(){
     const [previewImage, setImagePreview] = useState<string>(null)
     const [progress, setProgress] = useState<number>(0)
     const [output, setOutput] = useState<[string, number][]>(null)
+    const [type, setType] = useState<"color" | "texture">("color")
 
     const wscRef = useRef<WebSocket>(null)
     const captureLoop = () => {
@@ -50,7 +52,7 @@ export default function Camera(){
                     const result = Object.entries(msg as Record<string, number>).sort(([_1, v1], [_2, v2]) => {
                         return v2 - v1
                     }) as any
-                    setOutput(result)
+                    if(result.length > 0) setOutput(result)
                     wsc.close()
                     setTimeout(() => {
                         captureLoop()
@@ -85,14 +87,26 @@ export default function Camera(){
     }, [])
 
     return <div className="flex w-full h-full items-center justify-center">
-        <div className="max-w-[75vw] max-h-[75vh] flex flex-col items-center justify-center">
+       <div className="max-w-[75vw] max-h-[75vh] flex flex-col items-center justify-center">
+            <div className="flex flex-row gap-4">
+                <p className={cn("transition-opacity duration-500", type == "color" ? "" : "opacity-0")}>Color</p>
+                <SwitchPrimitive.Root
+                    defaultChecked={type == "texture"}
+                    onCheckedChange={c => setType(c ? "texture" : "color")}
+                    className="w-[42px] h-[25px] bg-blue-300 rounded-full relative mb-2"
+                    id="airplane-mode"
+                >
+                    <SwitchPrimitive.Thumb className="block w-[21px] h-[21px] bg-white rounded-full transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[19px]" />
+                </SwitchPrimitive.Root>
+                <p className={cn("transition-opacity duration-500", type == "texture" ? "" : "opacity-0")}>Texture</p>
+            </div>
+
             <video className="bg-black max-w-[50vw] max-h-[50vw]" ref={videoRef} />
             <canvas className="border-2 hidden" ref={canvasRef} />
-            <div className="w-full max-w-[50vw] h-5 bg-white border-2 transition-all" >
+            <div className="flex-shrink-0 w-full max-w-[50vw] h-5 bg-white border-2 transition-all" >
                 <div className="bg-blue-300 h-full" style={{ width: `${progress}%` }}></div>
             </div>
-            <div className="flex flex-row">
-                {/* <img src={previewImage} className="max-w-[100px] max-h-[100px]" /> */}
+            <div className="flex flex-row flex-shrink-0 h-[10vh]">
                 {output ? output.slice(0, 3).map(([name, value]) => {
                     return <img key={name} className="max-w-[10vw] max-h-[10vh]" src={`/dataset/${name}`} />
                 }) : null}
