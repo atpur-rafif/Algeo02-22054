@@ -72,7 +72,10 @@ int main(int argc, char** argv){
         if(hasTarget){
             if(cbirType == "texture") normalizeWithGaussian(testVectors);
             double angle = Vectors::getAngleAverage(targetVectors, testVectors);
-            printf("(%d/%d) %s: %lf\n", count, tillCount,  filename.c_str(), angle);
+
+            string c = "";
+            if(cacheMiss) c = " [Cache miss] ";
+            printf("(%d/%d)%s %s: %lf\n", count, tillCount, c.c_str(), filename.c_str(), angle);
         } else {
             string msg = "hit";
             if(cacheMiss) msg = "miss";

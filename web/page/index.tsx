@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client"
 import Cbir from "./route/Cbir"
 import Dataset from "./route/Dataset"
+import Camera  from "./route/Camera"
 import { RouterProvider, createBrowserRouter } from "react-router-dom"
 import Root from "./route/Root"
 
@@ -17,6 +18,10 @@ const router = createBrowserRouter([{
         {
             path: "/dataset",
             element: <Dataset />
+        },
+        {
+            path: "/camera",
+            element: <Camera />
         }
     ]
 }])

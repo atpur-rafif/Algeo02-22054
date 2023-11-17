@@ -133,7 +133,7 @@ void calculateGaussianProperties(string datasetPath, vector<string> dataset){
         dev->vectors[i] = new Vector(dimension);
     }
 
-    int count = 0;
+    int count = 0; int tillCount = dataset.size();
     for (const auto filename : dataset){
         string path = datasetPath + "/" + filename;
         Vectors *testVectors = getCache(filename);
@@ -142,6 +142,7 @@ void calculateGaussianProperties(string datasetPath, vector<string> dataset){
         if (cacheMiss){
             Image *testImage = new Image(path);
             testVectors = getTextureFeature(testImage);
+            addCache(filename, testVectors);
             delete testImage;
         }
 
@@ -154,6 +155,8 @@ void calculateGaussianProperties(string datasetPath, vector<string> dataset){
         }
         ++count;
 
+        printf("(%d/%d) [Texture Cache Miss] %s\n", count, tillCount, filename.c_str());
+        fflush(stdout);
         delete testVectors;
     }
 

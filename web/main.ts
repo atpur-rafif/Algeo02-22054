@@ -147,7 +147,7 @@ app.use(express.static(resolve(__dirname, PAGE)));
 app.use("/dataset", express.static(resolve(__dirname, DATASET)));
 
 app.post("/cbir", uploadTarget, async (req, res) => {
-    res.json({ filename: req.file.filename } )
+    res.json({ filename: req.file?.filename } )
 })
 
 app.get("*", (_, res) => {
@@ -160,42 +160,54 @@ const wss = new WebSocketServer({
 
 wss.addListener("connection", (client) => {
     client.addEventListener("message", async ({data}) => {
-        const { method, filename, force } = await JSON.parse(data as string)
+        const { method, filename, force, revalidate } = await JSON.parse(data as string)
         if(!(method == "color" || method == "texture")) return
+
         const start = performance.now()
-        cacheValidation.startListen((msg) => {
-            if(msg == MARK_END) {
-                const p = spawn(exePath, [method, datasetPath, resolve(uploadPath, filename)])
 
-                let stdout = ""
-                p.stdout.setEncoding("utf-8")
-                p.stdout.on("data", (data: string) => {
-                    stdout += data;
-                    client.send(JSON.stringify({
-                        msg: getLastLine(data),
-                        finished: false
-                    }))
-                })
+        const compareProcess = () => {
+            const p = spawn(exePath, [method, datasetPath, resolve(uploadPath, filename)])
 
-                p.on("close", () => {
-                    const end = performance.now()
+            let stdout = ""
+            p.stdout.setEncoding("utf-8")
+            p.stdout.on("data", (data: string) => {
+                stdout += data;
+                client.send(JSON.stringify({
+                    msg: getLastLine(data),
+                    finished: false
+                }))
+            })
 
-                    const data = {}
-                    unlinkSync(resolve(uploadPath, filename))
-                    stdout.split("\n").forEach(l => {
-                        if(!l.trim()) return
-                        const [_, filename, result] = (/\ (.+)\:\ ([0-9\.]+)/gm).exec(l)
+            p.on("close", () => {
+                const end = performance.now()
+
+                const data = {}
+                unlinkSync(resolve(uploadPath, filename))
+                stdout.split("\n").forEach(l => {
+                    if (!l.trim()) return
+                    const match = (/([^\s]+)\:\ ([0-9\.]+)/gm).exec(l)
+                    if(match){
+                        const [_, filename, result] = match
                         data[filename] = parseFloat(result)
-                    })
-                    client.send(JSON.stringify({
-                        msg: data,
-                        finished: true,
-                        time: Math.floor(end - start)
-                    }))
+                    }
                 })
-            } else client.send(JSON.stringify({msg, finished: false}))
-        }, method)
-        cacheValidation.revalidate(method, force)
+                client.send(JSON.stringify({
+                    msg: data,
+                    finished: true,
+                    time: Math.floor(end - start)
+                }))
+            })
+        }
+
+        if (revalidate) {
+            cacheValidation.startListen((msg) => {
+                if (msg == MARK_END) compareProcess()
+                else client.send(JSON.stringify({ msg, finished: false }))
+            }, method)
+            cacheValidation.revalidate(method, force)
+        } else {
+            compareProcess()
+        }
     })
 })
 

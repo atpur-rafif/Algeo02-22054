@@ -1,4 +1,4 @@
-import { AirplayIcon, Database, Home, LucideIcon } from "lucide-react";
+import { Camera, Database, Home } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 
@@ -18,6 +18,11 @@ const navbar: {
         name: "Dataset",
         path: "/dataset",
         icon: <Database />
+    },
+    {
+        name: "Camera",
+        path: "/camera",
+        icon: <Camera />
     }
 ]
 
@@ -29,7 +34,7 @@ export default function(){
     })
 
     return <div className="w-screen h-screen flex flex-col justify-center items-center">
-        <div className="transition-all group relative bg-blue-300 grid grid-rows-[0fr] hover:grid-rows-[1fr] w-full mb-5 hover:mb-0">
+        <div className="flex-shrink-0 transition-all group relative bg-blue-300 grid grid-rows-[0fr] hover:grid-rows-[1fr] w-full mb-5 hover:mb-0">
             <div className="overflow-hidden w-full">
                 <ul className="p-7 flex flex-row justify-center items-center gap-16 text-lg">
                     {navbar.map(({ name, path, icon }) => {

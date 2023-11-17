@@ -17,7 +17,7 @@ function FileToBase64(file: File): Promise<string>{
     })
 }
 
-const getProgress = (out: string) => {
+export const getProgress = (out: string) => {
     try {
         const [_, a, b] = (/\(([0-9]+)\/([0-9]+)\)/gm).exec(out)
         const f = parseFloat(a) / parseFloat(b)
@@ -27,14 +27,14 @@ const getProgress = (out: string) => {
     }
 }
 
-type OutputViewData = {
+export type OutputViewData = {
     target: string,
     result: [string, number][],
     resetter: () => void;
     time: number
 }
 
-function OutputView({target, result, time, resetter} : OutputViewData){
+export function OutputView({target, result, time, resetter} : OutputViewData){
     const {container, dimension} = useGridTiling({ width: 250, height: 250 })
     const [currentPage, setCurrentPage] = useState<number>(0)
 
@@ -155,15 +155,15 @@ export default function(){
             body: formData
         })).json()
 
-        wscRef.current = new WebSocket(wsURL)
-        wscRef.current.addEventListener("open", () => {
-            wscRef.current.send(JSON.stringify({
+        const wsc = new WebSocket(wsURL)
+        wsc.addEventListener("open", () => {
+            wsc.send(JSON.stringify({
                 method, filename,
                 force: false
             }))
         })
 
-        wscRef.current.addEventListener("message", async ({data: raw}) => {
+        wsc.addEventListener("message", async ({data: raw}) => {
             const { msg, finished, time } = await JSON.parse(raw)
             if(finished){
                 const result = Object.entries(msg as Record<string, number>).filter(([_, v]) => v >= 0.6).sort(([_1, v1], [_2, v2]) => {
@@ -173,6 +173,7 @@ export default function(){
                     result, time, resetter,
                     target: previewImage,
                 })
+                wsc.close()
             } else {
                 const prog = getProgress(msg)
                 if(!Number.isNaN(prog)) setProgress(getProgress(msg))
