@@ -28,9 +28,22 @@ export default function(){
         queue: File[] = []
         datasetSetter: React.Dispatch<React.SetStateAction<string[]>>
 
+        preventExit: boolean = false
+        unloadListener(){
+            return "Program still uploading, are you sure want to exit and stop uploading? (Uploaded file still exist on server)"
+        }
+
         process(){
-            if(this.queue.length == 0) return
+            if(this.queue.length == 0){
+                this.preventExit = false
+                window.onbeforeunload = null
+                return
+            }
             if(this.currentCount == this.maxCount) return
+            if(!this.preventExit){
+                this.preventExit = true
+                window.onbeforeunload = this.unloadListener
+            }
 
             const form = new FormData()
             form.append("image", this.queue.pop())
@@ -50,7 +63,9 @@ export default function(){
         }
 
         push(...files: File[]){
-            this.queue.push(...files)
+            // Callstack problem???
+            if(this.queue.length == 0) this.queue = files
+            else this.queue.push(...files)
             this.process()
         }
     })())
