@@ -1,8 +1,8 @@
+import { cn } from "@/lib/utils"
+import * as SwitchPrimitive from "@radix-ui/react-switch"
 import { useEffect, useRef, useState } from "react"
 import { wsURL } from ".."
-import * as SwitchPrimitive from "@radix-ui/react-switch"
-import { OutputViewData, getProgress } from "./Cbir"
-import { cn } from "@/lib/utils"
+import { getProgress } from "./Cbir"
 
 export default function Camera(){
     const videoRef = useRef<HTMLVideoElement>()
