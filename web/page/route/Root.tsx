@@ -1,4 +1,4 @@
-import { Camera, Database, Home, Info } from "lucide-react";
+import { Aperture, Camera, Database, Home, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 
@@ -10,9 +10,9 @@ const navbar: {
     icon: JSX.Element
 }[] = [
     {
-        name: "Home",
+        name: "iCBIR",
         path: "/",
-        icon: <Home />
+        icon: <Aperture />
     },
     {
         name: "Dataset",
