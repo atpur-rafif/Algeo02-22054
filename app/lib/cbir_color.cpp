@@ -2,37 +2,74 @@
 #include "image.hpp"
 #include "vector.hpp"
 
-Vector *getHSVFeatureVector(Image *img, Histogram *hHist, Histogram *sHist, Histogram *vHist){
-    Vector* v = new Vector(hHist->size + sHist->size + vHist->size);
+int getBinH(double h){
+    int r = 1;
 
-    for(int i = 0; i < img->height; ++i){
-        for(int j = 0; j < img->width; ++j){
-            HSV hsv = img->getHSV(j, i);
-            
-            int ih = hHist->getBin(hsv.h);
-            int is = sHist->getBin(hsv.s);
-            int iv = vHist->getBin(hsv.v);
+    if(h > 25.0) r = 2;
+    if(h > 40.0) r = 3;
+    if(h > 120.0) r = 4;
+    if(h > 190.0) r = 5;
+    if(h > 270.0) r = 6;
+    if(h > 295) r = 7;
+    if(h > 315) r = 0;
 
-            v->component[ih] += 1;
-            v->component[hHist->size + is] += 1;
-            v->component[hHist->size + sHist->size + iv] += 1;
+    return r;
+}
+
+int getBinS(double s){
+    int r = 0;
+
+    if(s > 0.2) r = 1;
+    if(s > 0.7) r = 2;
+
+    return r;
+}
+
+int getBinV(double v){
+    int r = 0;
+
+    if(v > 0.2) r = 1;
+    if(v > 0.7) r = 2;
+
+    return r;
+}
+
+Vectors *getHSVFeatureVector(Image *img){
+    ImageBlocks *blocks = new ImageBlocks(img, BLOCK, BLOCK);
+    Vectors* vs = new Vectors(BLOCK * BLOCK);
+
+    for(int i = 0; i < blocks->blockRow; ++i){
+        for(int j = 0; j < blocks->blockCol; ++j){
+            Vector* v = new Vector(72);
+            Block *block = blocks->getBlock(i, j);
+
+            for (int k = 0; k < block->height; ++k){
+                for (int l = 0; l < block->width; ++l){
+                    HSV hsv = block->getHSV(l, k);
+
+                    int ih = getBinH(hsv.h);
+                    int is = getBinS(hsv.s);
+                    int iv = getBinV(hsv.v);
+
+                    v->component[(24 * iv) + (8 * is) + ih] += 1;
+                }
+            }
+
+            vs->vectors[i * blocks->blockRow + j] = v;
         }
     }
 
-    return v;
+    delete blocks;
+    return vs;
 }
 
-double getColorAngle(Image *img1, Image *img2, int binSize){
-    auto hist = Histogram::createUniformHistogram(0.0, 1.0, binSize);
-    double result = getColorAngle(img1, img2, hist, hist, hist);
-    delete hist;
-    return result;
-}
+double getColorAngle(Vectors *vs1, Vectors *vs2){
+    double res = 0;
+    int size = vs1->size;
+    for(int i = 0; i < size; ++i){
+        res += Vector::angle(vs1->vectors[i], vs2->vectors[i]);
+    }
+    res = res / size;
 
-double getColorAngle(Image *img1, Image *img2, Histogram *hHist, Histogram *sHist, Histogram *vHist){
-    Vector* a = getHSVFeatureVector(img1, hHist, sHist, vHist);
-    Vector* b = getHSVFeatureVector(img2, hHist, sHist, vHist);
-    double result = Vector::angle(a, b);
-    delete a; delete b;
-    return result;
+    return res;
 }

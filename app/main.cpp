@@ -1,69 +1,89 @@
 #include <stdio.h>
 #include <string>
-#include <iostream>
 #include <chrono>
-#include <fstream>
-#include <filesystem>
+#include <thread>
 #include <set>
 #include <vector>
+#include <dirent.h>
 #include "lib/image.hpp"
 #include "lib/vector.hpp"
-#include "lib/histogram.hpp"
 #include "lib/cbir_color.hpp"
 #include "lib/cbir_texture.hpp"
-#include "lib/nlohmann/json.hpp"
+#include "lib/cache.hpp"
 
 using namespace std;
-using namespace std::__fs;
-using json = nlohmann::json;
-using namespace std::chrono;
-set<string> exts = {".png", ".jpg", ".bmp"};
+set<string> exts = {"png", "jpg", "jpeg", "bmp"};
 
-int main(){
-    ifstream config("./dist/target/texture.json");
-    json data = json::parse(config);
-
-    string dataset = data.at("dataset");
-    string target = data.at("target");
-
-    string type = data.at("type");
-
-    auto targetImage = new Image(target);
-    vector<string> datasetPaths;
-    for(const auto &entry : filesystem::directory_iterator(dataset)){
-        auto path = entry.path();
-        auto ext = path.extension();
-        if(exts.count(ext) == 0) continue;
-        datasetPaths.push_back(path);
+int main(int argc, char** argv){
+    if(!(argc == 3 || argc == 4)){
+        printf("Usage: %s [CBIR Type] [Dataset Directory Path] [Target Image Path]\n", argv[0]);
+        printf("CBIR Type: \"color\" or \"texture\"\n");
+        printf("Empty target for caching purpose only\n");
+        return 0;
     }
 
-    if(type == string("color")){
-        auto bin = data.at("bin");
-        vector<double> hBin = bin.at("h");
-        vector<double> sBin = bin.at("s");
-        vector<double> vBin = bin.at("v");
+    string datasetPath = argv[2];
+    DIR *datasetDir = opendir(datasetPath.c_str());
 
-        auto hHist = new Histogram(hBin);
-        auto sHist = new Histogram(sBin);
-        auto vHist = new Histogram(vBin);
+    dirent *tmpDirent;
+    vector<string> dataset;
+    while((tmpDirent = readdir(datasetDir)) != NULL){
+        string filename = tmpDirent->d_name;
+        string ext = filename.substr(filename.rfind(".") + 1);
+        if(exts.count(ext) == 0) continue;
+        dataset.push_back(filename);
+    }
 
-        for(const auto testPath : datasetPaths){
-            auto testImage = new Image(testPath);
-            printf("%s %lf\n", testPath.c_str(), getColorAngle(targetImage, testImage, 5));
+    bool hasTarget = argc == 4;
+    string cbirType = argv[1];
+    string targetPath = hasTarget ? argv[3] : "";
+    cacheSetup(datasetPath, cbirType);
+
+    Vectors* (*vectorsFn) (Image*) = NULL;
+    if(cbirType == "color") vectorsFn = getHSVFeatureVector;
+    else if(cbirType == "texture") vectorsFn = getTextureFeature;
+
+    // Calculate mean and standard deviation [Make sure to do caching to make this faster, beside there won't be any info about cache hit or miss in this operation]
+    if(hasTarget && cbirType == "texture") calculateGaussianProperties(datasetPath, dataset);
+
+    Image *targetImage;
+    Vectors *targetVectors;
+    if(hasTarget){
+        targetImage = new Image(targetPath);
+        targetVectors = vectorsFn(targetImage);
+
+        if (cbirType == "texture") normalizeWithGaussian(targetVectors);
+    }
+
+    int count = 0; int tillCount = dataset.size();
+    for (const auto filename : dataset){
+        string path = datasetPath + "/" + filename;
+        Vectors *testVectors = getCache(filename);
+        bool cacheMiss = testVectors == NULL;
+
+        if (cacheMiss){
+            Image *testImage = new Image(path);
+            testVectors = vectorsFn(testImage);
+            addCache(filename, testVectors);
             delete testImage;
         }
-    } else if(type == string("texture")){
-        int blockSize = data.at("blockSize");
-        int dimension = blockSize * blockSize;
 
-        auto contrastTarget = new Vector(dimension);
-        auto homogenityTarget = new Vector(dimension);
-        auto entropyTarget = new Vector(dimension);
+        ++count;
+        if(hasTarget){
+            if(cbirType == "texture") normalizeWithGaussian(testVectors);
+            double angle = Vectors::getAngleAverage(targetVectors, testVectors);
 
-        for(const auto testPath : datasetPaths){
-            auto testImage = new Image(testPath);
-            printf("%s", testPath.c_str());
-            break;
+            string c = "";
+            if(cacheMiss) c = " [Cache miss] ";
+            printf("(%d/%d)%s %s: %lf\n", count, tillCount, c.c_str(), filename.c_str(), angle);
+        } else {
+            string msg = "hit";
+            if(cacheMiss) msg = "miss";
+            printf("(%d/%d) Cache %s (%s)\n", count, tillCount,  msg.c_str(), filename.c_str());
         }
+        fflush(stdout);
+
+        delete testVectors;
     }
+    cacheCleanup();
 }

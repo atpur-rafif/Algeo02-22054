@@ -59,3 +59,26 @@ double Vector::angle(Vector *vectorA, Vector *vectorB){
     return c;
 }
 
+Vectors::Vectors(int size){
+    this->size = size;
+    this->vectors = (Vector**) calloc(size, sizeof(Vector*));
+}
+
+Vectors::~Vectors(){
+    for(int i = 0; i < this->size; ++i){
+        Vector* v = this->vectors[i];
+        if(!v) delete v;
+    }
+    free(this->vectors);
+}
+
+double Vectors::getAngleAverage(Vectors *vs1, Vectors *vs2){
+    double res = 0;
+    int size = fmin(vs1->size, vs2->size);
+    for (int i = 0; i < size; ++i){
+        res += Vector::angle(vs1->vectors[i], vs2->vectors[i]);
+    }
+    res = res / size;
+
+    return res;
+}

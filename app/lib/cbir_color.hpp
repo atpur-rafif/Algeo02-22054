@@ -3,11 +3,9 @@
 
 #include "vector.hpp"
 #include "image.hpp"
-#include "histogram.hpp"
+#define BLOCK 4
 
-Vector *getHSVFeatureVector(Image *img, Histogram *hHist, Histogram *sHist, Histogram *vHist);
-double getColorAngle(Image *img1, Image *img2, int binSize);
-double getColorAngle(Image *img1, Image *img2, Histogram *hHist, Histogram *sHist, Histogram *vHist);
+Vectors *getHSVFeatureVector(Image *img);
+double getColorAngle(Vectors *vs1, Vectors *vs2);
 
 #endif
-

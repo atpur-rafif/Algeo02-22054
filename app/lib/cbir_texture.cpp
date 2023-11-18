@@ -1,5 +1,13 @@
 #include <limits.h>
+#include <cmath>
+#include <vector>
 #include "cbir_texture.hpp"
+#include "cache.hpp"
+
+using namespace std;
+
+static Vectors *mean = new Vectors(3);
+static Vectors *dev = new Vectors(3);
 
 // Mapping between Matrix component to Vector Component
 int flatten(int x, int y, int yScale){
@@ -43,16 +51,31 @@ Vector *getGLCMVectorFeature(Image* img, int offsetX, int offsetY){
     return v;
 }
 
-Vector *getTextureFeature(Image* img){
-    Vector *GLCM = getGLCMVectorFeature(img, 1, 1);
-    Vector *res = new Vector(3);
+Vectors *getTextureFeature(Image* img){
+    Vectors *vs = new Vectors(3);
 
-    res->component[0] = getContrast(GLCM);
-    res->component[1] = getHomogeneity(GLCM);
-    res->component[2] = getEntropy(GLCM);
+    int dimension = TEXTURE_RANGE * TEXTURE_RANGE - 1;
+    Vector* contrast = (vs->vectors[0] = new Vector(dimension));
+    Vector* homogenity = (vs->vectors[1] = new Vector(dimension));
+    Vector* entropy = (vs->vectors[2] = new Vector(dimension));
 
-    delete GLCM;
-    return res;
+
+    for(int i = 0; i < TEXTURE_RANGE; ++i){
+        for(int j = 0; j < TEXTURE_RANGE; ++j){
+            if(i == 0 && j == 0) continue;
+
+            Vector *v = getGLCMVectorFeature(img, i, j);
+
+            int idx = i * TEXTURE_RANGE + j - 1;
+            contrast->component[idx] = getContrast(v);
+            homogenity->component[idx] = getHomogeneity(v);
+            entropy->component[idx] = getEntropy(v);
+
+            delete v;
+        }
+    }
+
+    return vs;
 }
 
 double getContrast(Vector *GLCM){
@@ -86,4 +109,69 @@ double getEntropy(Vector *GLCM){
         }
     }
     return (-1) * res;
+}
+
+void normalizeWithGaussian(Vectors *vs){
+    int dimension = TEXTURE_RANGE * TEXTURE_RANGE - 1;
+    for (int i = 0; i < 3; ++i){
+        for (int j = 0; j < dimension; ++j){
+            double v = vs->vectors[i]->component[j];
+            v = v - mean->vectors[i]->component[j];
+            v = v / dev->vectors[i]->component[j];
+            vs->vectors[i]->component[j] = v;
+        }
+    }
+}
+
+void calculateGaussianProperties(string datasetPath, vector<string> dataset){
+    mean = new Vectors(3);
+    dev = new Vectors(3);
+
+    int dimension = TEXTURE_RANGE * TEXTURE_RANGE - 1;
+    for (int i = 0; i < 3; ++i){
+        mean->vectors[i] = new Vector(dimension);
+        dev->vectors[i] = new Vector(dimension);
+    }
+
+    int count = 0; int tillCount = dataset.size();
+    for (const auto filename : dataset){
+        string path = datasetPath + "/" + filename;
+        Vectors *testVectors = getCache(filename);
+        bool cacheMiss = testVectors == NULL;
+
+        if (cacheMiss){
+            Image *testImage = new Image(path);
+            testVectors = getTextureFeature(testImage);
+            addCache(filename, testVectors);
+            delete testImage;
+        }
+
+        for (int i = 0; i < 3; ++i){
+            for (int j = 0; j < dimension; ++j){
+                double r = testVectors->vectors[i]->component[j];
+                mean->vectors[i]->component[j] += r;
+                dev->vectors[i]->component[j] += r * r;
+            }
+        }
+        ++count;
+
+        printf("(%d/%d) [Texture Cache Miss] %s\n", count, tillCount, filename.c_str());
+        fflush(stdout);
+        delete testVectors;
+    }
+
+    for (int i = 0; i < 3; ++i){
+        for (int j = 0; j < dimension; ++j){
+            double m = mean->vectors[i]->component[j];
+            double d = dev->vectors[i]->component[j];
+
+            m = m / count;
+            d = d / count;
+            d = d - (m * m);
+            d = sqrt(d);
+
+            mean->vectors[i]->component[j] = m;
+            dev->vectors[i]->component[j] = d;
+        }
+    }
 }
