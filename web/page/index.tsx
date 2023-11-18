@@ -4,6 +4,7 @@ import Dataset from "./route/Dataset"
 import Camera  from "./route/Camera"
 import { RouterProvider, createBrowserRouter } from "react-router-dom"
 import Root from "./route/Root"
+import Info from "./route/Info"
 
 export const wsURL = `ws${window.location.protocol.endsWith("s") ? "s" : ""}://${window.location.host}`
 
@@ -22,6 +23,10 @@ const router = createBrowserRouter([{
         {
             path: "/camera",
             element: <Camera />
+        },
+        {
+            path: "/info",
+            element: <Info />
         }
     ]
 }])

@@ -1,4 +1,4 @@
-import { Camera, Database, Home } from "lucide-react";
+import { Camera, Database, Home, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 
@@ -23,6 +23,11 @@ const navbar: {
         name: "Camera",
         path: "/camera",
         icon: <Camera />
+    },
+    {
+        name: "Info",
+        path: "/info",
+        icon: <Info />
     }
 ]
 
