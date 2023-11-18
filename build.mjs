@@ -16,7 +16,7 @@ const livereloadServer = {
 }
 
 function tailwindBuild(){
-    const command = "npx tailwindcss -i ./web/page/index.css -o ./dist/page/index.css"
+    const command = "npx tailwindcss -i ./web/page/index.css -o ./dist/page/index.css" + (!watch ? " --minify" : "")
     const process = exec(command)
 
     process.stderr.on("data", (e) => {
@@ -52,6 +52,7 @@ const contextFrontend = await esbuild.context({
     entryPoints: ["./web/page/index.tsx"],
     bundle: true,
     outfile: "./dist/page/index.js",
+    minify: !watch,
     plugins: [
         {
             name: "Frontend-reload",
@@ -76,7 +77,8 @@ const contextBackend = await esbuild.context({
     format: "cjs",
     outdir: "./dist",
     platform: "node",
-    packages: "external",
+    packages: watch ? "external" : undefined,
+    minify: !watch,
     platform: "node",
     bundle: true,
     plugins: [
@@ -90,6 +92,7 @@ const contextBackend = await esbuild.context({
         }
     ]
 })
+
 
 const ignoreCopy = "ts|tsx|css"
 await cpy(["./web/**/*", `!./web/**/*.(${ignoreCopy})`], "./dist")

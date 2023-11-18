@@ -24,8 +24,11 @@ $(OUT_PATH) : $(DEPS_OBJ)
 
 build: $(OUT_PATH)
 
+build-production: build
+	rm -rf $(OUT_DIR)/o
+
 clean:
 	rm -rf $(OUT_DIR)
 
-all: $(OUT_PATH)
-	$(OUT_DIR)/main texture ./dataset ./dataset/123.jpg
+test: $(OUT_PATH)
+	$(OUT_DIR)/main color ./dataset ./dataset/1.jpg
