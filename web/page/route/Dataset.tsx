@@ -106,7 +106,7 @@ export default function(){
     const page: (() => readonly [string, JSX.Element])[] = [
         () => {
             return ["Upload New", <>
-                <label htmlFor="inp-dir" className="w-full h-full flex items-center justify-center cursor-pointer bg-white">
+                <label htmlFor="inp-dir" className="w-full h-full flex items-center justify-center cursor-pointer bg-white transition-all rounded-2xl hover:bg-blue-300 hover:text-white">
                     <div className="flex flex-col text-sm justify-center items-center">
                         <Folder className="w-16 h-16" />
                         <p>Add New</p>
@@ -119,7 +119,7 @@ export default function(){
             </>] as const
         },
         () => {
-            return ["Delete All", <button className="w-full h-full flex items-center justify-center bg-white" onClick={deleteAllHandler}>
+            return ["Delete All", <button className="w-full h-full flex items-center justify-center bg-white transition-all rounded-2xl hover:bg-blue-300 hover:text-white" onClick={deleteAllHandler}>
                 <div className="flex flex-col text-sm justify-center items-center">
                     <Trash2 className="w-16 h-16" />
                     <p>Delete All</p>
@@ -127,7 +127,7 @@ export default function(){
             </button>]
         },
         () => {
-            return ["Clear Cache", <button className="w-full h-full flex items-center justify-center bg-white" onClick={clearCacheHandler}>
+            return ["Clear Cache", <button className="w-full h-full flex items-center justify-center bg-white transition-all rounded-2xl hover:bg-blue-300 hover:text-white" onClick={clearCacheHandler}>
                 <div className="flex flex-col text-sm justify-center items-center">
                     <RefreshCcw className="w-16 h-16" />
                     <p>Clear Cache</p>

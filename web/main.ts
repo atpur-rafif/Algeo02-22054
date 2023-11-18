@@ -84,8 +84,8 @@ class CacheManager{
     }
 
     clearCache(){
-        unlinkSync(this.cachePath)
-        unlinkSync(this.cacheStatusPath)
+        if(existsSync(this.cachePath)) unlinkSync(this.cachePath)
+        if(existsSync(this.cacheStatusPath)) unlinkSync(this.cacheStatusPath)
     }
 
     checkStale(){
