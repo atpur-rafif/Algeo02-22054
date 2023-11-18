@@ -7,13 +7,13 @@
     "ws": "^8.14.2"
   },
   "scripts": {
-    "build-app": "make build",
+    "build-app": "make build-production",
     "build-web": "node ./build.mjs",
     "dev-web": "node ./build.mjs -w",
     "dev-app": "nodemon -q --exec \"make build && echo\" -e cpp",
     "dev-all": "concurrently \"npm run dev-app\" \"npm run dev-web\" -n app,web",
     "build": "npm run build-app; npm run build-web",
-    "all": "npm run build; node ./dist/main.js"
+    "serve": "node ./dist/main.js"
   },
   "devDependencies": {
     "@radix-ui/react-slot": "^1.0.2",
