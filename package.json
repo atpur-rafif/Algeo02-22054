@@ -1,6 +1,7 @@
 {
   "type": "commonjs",
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-slider": "^1.1.2",
     "@radix-ui/react-switch": "^1.0.3",
     "react-router-dom": "^6.19.0",

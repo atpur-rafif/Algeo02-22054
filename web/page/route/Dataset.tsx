@@ -142,7 +142,7 @@ export default function(){
     ]
     const maxPage = Math.ceil(page.length / paginationSize) - 1;
 
-    return <div className="w-screen h-screen flex flex-col">
+    return <div className="w-screen h-full pt-5 flex flex-col">
         <div ref={container} className="w-full h-full grid overflow-hidden gap-2 flex-grow p-5" style={{
             gridTemplateColumns: `repeat(${dimension.col}, 1fr)`,
             gridTemplateRows: `repeat(${dimension.row}, 1fr)`
