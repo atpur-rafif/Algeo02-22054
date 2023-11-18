@@ -5,12 +5,14 @@ import Camera  from "./route/Camera"
 import { RouterProvider, createBrowserRouter } from "react-router-dom"
 import Root from "./route/Root"
 import Info from "./route/Info"
+import ErrorPage from "./route/Error"
 
 export const wsURL = `ws${window.location.protocol.endsWith("s") ? "s" : ""}://${window.location.host}`
 
 const router = createBrowserRouter([{
     path: "/",
     element: <Root />,
+    errorElement: <ErrorPage />,
     children: [
         {
             path: "",
