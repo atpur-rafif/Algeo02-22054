@@ -72,7 +72,7 @@ export default function() {
                             <AccordionTrigger>About Us</AccordionTrigger>
                             <AccordionContent className='flex flex-col gap-5'>
                                 <p>iCBIR adalah sebuah website yang memberikan layanan untuk mencari gambar yang mirip dengan input user.</p>
-                                <p>Website ini merupakan hasil Tugas Besar 2 IF 2123 Aljabar Linier dan Geometri tentang Aplikasi Aljabar Vektor dalam Sistem Temu Balik Gambar.</p>
+                                <p>Website ini merupakan hasil Tugas Besar 2 IF2123 Aljabar Linier dan Geometri tentang Aplikasi Aljabar Vektor dalam Sistem Temu Balik Gambar.</p>
                                 <div>
                                     <p>Proyek iCBR ini dibuat oleh:</p>
                                     <ul className='ml-6'>

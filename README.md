@@ -13,9 +13,25 @@ User akan mengirim gambar ke website, lalu program akan menampilkan gambar-gamba
 ![Demo](Demo.gif)  
 
 ## Using Release
-Download file with the same target machine as your computer, then inflate it. To run the program, you must have node.js installed and using `node main.js` command in release root directory (where main.js exist).  
+1. Download web.zip and binary with the same target machine as your computer (see: target machine)
+2. Inflate/extract web.zip  
+3. Create folder `bin` in inflated/extracted folder  
+4. Move binary file to `bin` then rename it to `main` (for windows use `main.exe`)  
+5. Go back to the root of inflated folder  
+6. Run `node main.js` to start the program  
 
-When binary blocked from running in macos machine, use `xattr -d com.apple.quarantine ./bin/main` command to allow it to run.
+### Target machine
+- Windows: x86_64-w64-mingw32 (Unstable, compiled with [w64devkit](https://github.com/skeeto/w64devkit))  
+- Linux64: x86_64-linux-gnu  
+- Apple Silicon: arm64-apple-darwin  
+
+## Build From Source
+Make sure you have already installed: `nodejs`, `npm`, `make`, `g++`
+1. Clone this repo
+2. Install dependencies with `npm i`
+3. Build binary with `make build`
+4. Build website with `npm run build-web`
+5. To serve, use command `npm run serve`
 
 ## Library Used
 [nothings/stb](https://github.com/nothings/stb)   
