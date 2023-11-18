@@ -1,4 +1,4 @@
-import { Camera, Database, Home } from "lucide-react";
+import { Camera, Database, Home, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 
@@ -23,6 +23,11 @@ const navbar: {
         name: "Camera",
         path: "/camera",
         icon: <Camera />
+    },
+    {
+        name: "Info",
+        path: "/info",
+        icon: <Info />
     }
 ]
 
@@ -34,7 +39,7 @@ export default function(){
     })
 
     return <div className="w-screen h-screen flex flex-col justify-center items-center">
-        <div className="flex-shrink-0 transition-all group relative bg-blue-300 grid grid-rows-[0fr] hover:grid-rows-[1fr] w-full mb-5 hover:mb-0">
+        <div className="flex-shrink-0 transition-all group relative bg-blue-300 grid grid-rows-[0fr] hover:grid-rows-[1fr] w-full border-b-2 border-white">
             <div className="overflow-hidden w-full">
                 <ul className="p-7 flex flex-row justify-center items-center gap-16 text-lg">
                     {navbar.map(({ name, path, icon }) => {
@@ -47,7 +52,7 @@ export default function(){
                     })}
                 </ul>
             </div>
-            <div className="absolute left-1/2 -translate-x-1/2 bg-blue-300 rounded-b-lg w-1/2 min-h-[1.5rem]">
+            <div className="absolute z-30 left-1/2 -translate-x-1/2 bg-blue-300 rounded-b-lg w-1/2 min-h-[1.5rem] border-2 border-t-0 border-white group-hover:opacity-0">
                 <div className="group-hover:opacity-0">{info}</div>
             </div>
         </div>
