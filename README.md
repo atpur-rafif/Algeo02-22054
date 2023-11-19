@@ -1,6 +1,7 @@
 ## Dekripsi Program
-Program ini bernama iCBIR. Program ini adalah program website yang digunakan untuk mencari gambar.
-User akan mengirim gambar ke website, lalu program akan menampilkan gambar-gambar yang mirip dengan input user.
+Program ini bernama iCBIR. Program ini adalah program website yang digunakan untuk mencari gambar.  
+User akan mengirim gambar ke website, lalu program akan menampilkan gambar-gambar yang mirip dengan input user.  
+Folder `src` diubah menjadi `web` dan `app` untuk mengurangi nested folder.  
 
 ## How To Use
 1. Buka halaman dataset dan tambahkan folder dataset pada Add New (Folder).
